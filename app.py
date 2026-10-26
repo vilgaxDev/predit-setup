@@ -504,82 +504,127 @@ try:
         else:
             st.sidebar.warning("⚠️ No integrated data found. Please upload a dataset.")
 
-    data_source = st.sidebar.radio(
-        "Data Input Mode",
-        ["Upload Custom Dataset", "Use Integrated Data Sources"]
-    )
-    
-    # If using integrated sources, show loaded data options
-    if data_source == "Use Integrated Data Sources" and 'all_data_sources' in st.session_state and st.session_state.all_data_sources:
-        st.sidebar.subheader("📊 Available Data Sources")
-        
-        # Create options for data source selection
-        data_options = []
+    # Data Source Selection with Checkboxes
+    st.sidebar.subheader("📊 Select Data Sources")
+
+    if 'all_data_sources' in st.session_state and st.session_state.all_data_sources:
+        # Group by file for better organization
+        file_groups = {}
         for key, info in st.session_state.all_data_sources.items():
-            data_options.append(f"{info['name']} ({info['records']:,} records)")
-        
-        selected_source = st.sidebar.selectbox(
-            "Select Active Dataset",
-            data_options,
-            help="Choose which dataset to use for analysis"
-        )
-        
-        # Update current_df based on selection
-        selected_index = data_options.index(selected_source)
-        selected_key = list(st.session_state.all_data_sources.keys())[selected_index]
-        st.session_state.current_df = st.session_state.all_data_sources[selected_key]['data']
-        st.session_state.data_source = f"integrated ({st.session_state.all_data_sources[selected_key]['name']})"
-        
-        st.sidebar.info(f"Currently using: {st.session_state.all_data_sources[selected_key]['name']}")
+            file_key = info.get('file_key', key)
+            if file_key not in file_groups:
+                file_groups[file_key] = []
+            file_groups[file_key].append((key, info))
 
-    uploaded_file = None
-    df_custom = None
+        # Initialize selected data sources if not set
+        if 'selected_data_sources' not in st.session_state:
+            # Select first sheet from each file by default
+            st.session_state.selected_data_sources = []
+            for file_key, sources in file_groups.items():
+                if sources:
+                    st.session_state.selected_data_sources.append(sources[0][0])
 
-    if data_source == "Upload Custom Dataset":
-        uploaded_file = st.sidebar.file_uploader(
-            "Upload Dataset (CSV/Excel)",
-            type=['csv', 'xlsx', 'xls'],
-            help="Upload your maternal health dataset"
-        )
-        
-        if uploaded_file is not None:
-            try:
-                if uploaded_file.name.endswith('.csv'):
-                    df_custom = pd.read_csv(uploaded_file)
-                    st.sidebar.success(f"✅ Loaded {len(df_custom):,} records from CSV")
-                    st.session_state.current_df = df_custom
-                    st.session_state.data_source = "uploaded"
+        # Create checkboxes for each data source
+        selected_keys = []
+        for file_key, sources in file_groups.items():
+            with st.sidebar.expander(f"📁 {file_key.upper()} ({len(sources)} sheets)", expanded=True):
+                for key, info in sources:
+                    is_checked = st.checkbox(
+                        f"{info['name']} ({info['records']:,} records)",
+                        value=key in st.session_state.selected_data_sources,
+                        key=f"checkbox_{key}"
+                    )
+                    if is_checked:
+                        selected_keys.append(key)
+
+        # Update session state
+        st.session_state.selected_data_sources = selected_keys
+
+        # Combine selected data sources or show dropdown for single selection
+        if len(selected_keys) > 0:
+            st.sidebar.subheader("🔍 Active Dataset")
+            if len(selected_keys) == 1:
+                # Single selection - show that data
+                active_key = selected_keys[0]
+                st.session_state.current_df = st.session_state.all_data_sources[active_key]['data']
+                st.session_state.data_source = f"integrated ({st.session_state.all_data_sources[active_key]['name']})"
+                st.sidebar.info(f"Using: {st.session_state.all_data_sources[active_key]['name']}")
+            else:
+                # Multiple selections - combine or let user choose
+                combine_mode = st.sidebar.radio(
+                    "Multiple Selection Mode",
+                    ["Combine All", "Choose Active"],
+                    help="Combine all selected data or choose one to view"
+                )
+
+                if combine_mode == "Combine All":
+                    # Combine all selected dataframes
+                    combined_dfs = []
+                    for key in selected_keys:
+                        combined_dfs.append(st.session_state.all_data_sources[key]['data'])
+                    st.session_state.current_df = pd.concat(combined_dfs, ignore_index=True)
+                    st.session_state.data_source = f"combined ({len(selected_keys)} sources)"
+                    st.sidebar.success(f"Combined {len(selected_keys)} data sources")
                 else:
-                    # Load all sheets from Excel
-                    all_sheets = load_excel_all_sheets(uploaded_file)
-                    if all_sheets:
-                        # Store all sheets
-                        for sheet_name, df_sheet in all_sheets.items():
-                            sheet_key = f"uploaded_{sheet_name}"
-                            st.session_state.all_data_sources[sheet_key] = {
-                                'name': f"Uploaded - {sheet_name}",
-                                'data': df_sheet,
-                                'records': len(df_sheet),
-                                'sheet_name': sheet_name,
-                                'file_key': 'uploaded'
-                            }
-                            st.sidebar.success(f"✅ Loaded {len(df_sheet):,} records from sheet: {sheet_name}")
-
-                        # Set first sheet as current
-                        first_key = list(all_sheets.keys())[0]
-                        st.session_state.current_df = all_sheets[first_key]
-                        st.session_state.data_source = f"uploaded ({first_key})"
-                    else:
-                        st.sidebar.error("❌ No sheets found in Excel file")
-            except Exception as e:
-                st.sidebar.error(f"❌ Error loading file: {e}")
-                st.sidebar.error(f"Details: {traceback.format_exc()}")
+                    # Let user choose which one to view
+                    options = [st.session_state.all_data_sources[k]['name'] for k in selected_keys]
+                    selected_option = st.sidebar.selectbox("Choose Active Dataset", options)
+                    active_key = [k for k in selected_keys if st.session_state.all_data_sources[k]['name'] == selected_option][0]
+                    st.session_state.current_df = st.session_state.all_data_sources[active_key]['data']
+                    st.session_state.data_source = f"integrated ({st.session_state.all_data_sources[active_key]['name']})"
+        else:
+            st.sidebar.warning("⚠️ No data sources selected")
+            st.session_state.current_df = None
     else:
-        st.sidebar.info("Using integrated data sources")
+        st.sidebar.warning("⚠️ No data loaded yet")
+
+    st.sidebar.markdown("---")
+
+    # Upload Custom Dataset option
+    st.sidebar.subheader("📤 Upload Custom Dataset")
+    uploaded_file = st.sidebar.file_uploader(
+        "Upload Dataset (CSV/Excel)",
+        type=['csv', 'xlsx', 'xls'],
+        help="Upload your maternal health dataset"
+    )
+
+    if uploaded_file is not None:
+        try:
+            if uploaded_file.name.endswith('.csv'):
+                df_custom = pd.read_csv(uploaded_file)
+                st.sidebar.success(f"✅ Loaded {len(df_custom):,} records from CSV")
+                st.session_state.current_df = df_custom
+                st.session_state.data_source = "uploaded"
+            else:
+                # Load all sheets from Excel
+                all_sheets = load_excel_all_sheets(uploaded_file)
+                if all_sheets:
+                    # Store all sheets
+                    for sheet_name, df_sheet in all_sheets.items():
+                        sheet_key = f"uploaded_{sheet_name}"
+                        st.session_state.all_data_sources[sheet_key] = {
+                            'name': f"Uploaded - {sheet_name}",
+                            'data': df_sheet,
+                            'records': len(df_sheet),
+                            'sheet_name': sheet_name,
+                            'file_key': 'uploaded'
+                        }
+                        st.sidebar.success(f"✅ Loaded {len(df_sheet):,} records from sheet: {sheet_name}")
+
+                    # Set first sheet as current
+                    first_key = list(all_sheets.keys())[0]
+                    st.session_state.current_df = all_sheets[first_key]
+                    st.session_state.data_source = f"uploaded ({first_key})"
+                else:
+                    st.sidebar.error("❌ No sheets found in Excel file")
+        except Exception as e:
+            st.sidebar.error(f"❌ Error loading file: {e}")
+            st.sidebar.error(f"Details: {traceback.format_exc()}")
+
 except Exception as e:
     st.sidebar.error(f"Sidebar error: {e}")
     st.sidebar.markdown("**Available Data Sources:**")
-    
+
     # Check available files
     data_files = {
         "Maternity Register": MATERNITY_FILE,
@@ -587,59 +632,15 @@ except Exception as e:
         "ANC Register 2": ANC_FILE_2,
         "Under-5 Register": UNDER5_FILE
     }
-    
+
     for name, filepath in data_files.items():
         if filepath.exists():
             st.sidebar.success(f"✅ {name}")
         else:
             st.sidebar.warning(f"⚠️ {name} (not found)")
-    
-    # Load ALL available files as fallback (all sheets)
-    st.session_state.all_data_sources = {}
-    for key, (name, filepath) in data_files.items():
-        if filepath.exists():
-            try:
-                all_sheets = load_excel_all_sheets(filepath)
-                if all_sheets:
-                    for sheet_name, df_sheet in all_sheets.items():
-                        sheet_key = f"{key}_{sheet_name}"
-                        st.session_state.all_data_sources[sheet_key] = {
-                            'name': f"{name} - {sheet_name}",
-                            'data': df_sheet,
-                            'records': len(df_sheet),
-                            'sheet_name': sheet_name,
-                            'file_key': key
-                        }
-                        st.sidebar.success(f"✅ Loaded {len(df_sheet):,} records from {name} - {sheet_name}")
-                else:
-                    st.sidebar.warning(f"⚠️ No sheets found in {name}")
-            except Exception as e:
-                st.sidebar.warning(f"⚠️ Could not load {name}: {e}")
 
-    # Also load anonymized data if available (all sheets)
-    sample_file = LOCAL_DATA_DIR / "anonymized_data_kg_export.xlsx"
-    if sample_file.exists():
-        try:
-            all_sheets = load_excel_all_sheets(sample_file)
-            if all_sheets:
-                for sheet_name, df_sheet in all_sheets.items():
-                    sheet_key = f"anonymized_{sheet_name}"
-                    st.session_state.all_data_sources[sheet_key] = {
-                        'name': f"Anonymized Data - {sheet_name}",
-                        'data': df_sheet,
-                        'records': len(df_sheet),
-                        'sheet_name': sheet_name,
-                        'file_key': 'anonymized'
-                    }
-                    st.sidebar.success(f"✅ Loaded {len(df_sheet):,} anonymized records from {sheet_name}")
-            else:
-                st.sidebar.warning("⚠️ No sheets found in anonymized data")
-        except Exception as e:
-            st.sidebar.warning(f"⚠️ Could not load anonymized data: {e}")
-    
-    # Set default current_df (first sheet of first file, or first available)
-    if st.session_state.all_data_sources:
-        # Try to find a maternity sheet first
+    # Set default current_df if not set
+    if st.session_state.all_data_sources and (st.session_state.current_df is None):
         maternity_keys = [k for k in st.session_state.all_data_sources.keys() if k.startswith('maternity_')]
         if maternity_keys:
             first_key = maternity_keys[0]
@@ -647,8 +648,6 @@ except Exception as e:
             first_key = list(st.session_state.all_data_sources.keys())[0]
         st.session_state.current_df = st.session_state.all_data_sources[first_key]['data']
         st.session_state.data_source = f"integrated ({st.session_state.all_data_sources[first_key]['name']})"
-    else:
-        st.sidebar.warning("Integrated data not found. Please upload a dataset.")
 
 try:
     user_role = st.sidebar.selectbox(
