@@ -1,0 +1,38 @@
+clinical_thresholds:
+  systolic_high_risk: 140
+  diastolic_high_risk: 90
+  haemoglobin_severe_risk: 7.0
+  haemoglobin_moderate_risk: 10.0
+  blood_glucose_high_risk: 7.8
+  min_adequate_anc_visits: 4
+  high_risk_score_cutoff: 65
+  moderate_risk_score_cutoff: 35
+
+data_governance:
+  small_cell_suppression_threshold: 5
+  pseudonym_prefix: "KEN-MOM-"
+  prohibited_fields:
+    - "national_id"
+    - "patient_name"
+    - "phone_number"
+    - "huduma_number"
+    - "physical_address"
+
+kenya_counties:
+  - "Nairobi"
+  - "Mombasa"
+  - "Kisumu"
+  - "Kilifi"
+  - "Nakuru"
+  - "Uasin Gishu"
+  - "Garissa"
+  - "Turkana"
+  - "Kiambu"
+  - "Machakos"
+
+model_parameters:
+  test_size: 0.25
+  random_state: 42
+  n_estimators: 120
+  max_depth: 4
+  learning_rate: 0.08

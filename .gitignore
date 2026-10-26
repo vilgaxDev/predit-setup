@@ -1,0 +1,41 @@
+# Excel files with real patient data
+# Allow specific data files for deployment
+!COMBINE_MOH_333_3replaced_KCHR.xlsx
+!MOH_405_ANC final JAN 2026.xlsx
+!MOH_405_ANC_20 version 2.xlsx
+!MOH_204A_UNDER5 revised version on jan 2026.xlsx
+!anonymized_data_kg_export.xlsx
+
+# Exclude other Excel files
+*.xlsx
+*.xls
+
+# Jupyter notebooks (development/legacy)
+*.ipynb
+
+# Original scripts outside dashboard (development only)
+# Keep dashboard/run_notebook.py which is used by the app
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+.venv/
+venv/
+
+# Streamlit cache
+.streamlit/
+
+# IDE
+.vscode/
+.idea/
+
+# Generated data files
+annotations/
+images/
+*.json
+
+# Local development
+.DS_Store

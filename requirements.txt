@@ -1,0 +1,14 @@
+streamlit
+pandas
+numpy
+openpyxl
+transformers
+torch
+torchvision
+matplotlib
+seaborn
+networkx
+scikit-learn
+plotly
+shap
+pyyaml
