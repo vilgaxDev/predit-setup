@@ -116,7 +116,11 @@ def find_data_file(filename):
         PROJECT_DATA_DIR / filename,
         PARENT_DATA_DIR / filename
     )
-    return next((path for path in candidates if path.is_file()), candidates[0])
+    # Return the first existing file, or the first candidate if none exist
+    for path in candidates:
+        if path.is_file():
+            return path
+    return candidates[0]  # Fallback to LOCAL_DATA_DIR
 
 def clean_dataframe_for_arrow(df):
     """Clean dataframe to make it Arrow-compatible by handling mixed types."""
@@ -530,7 +534,7 @@ try:
         st.session_state.current_df = st.session_state.all_data_sources[first_key]['data']
         st.session_state.data_source = f"integrated ({st.session_state.all_data_sources[first_key]['name']})"
 
-    # Data Source Selection with Checkboxes
+    # Data Source Selection with Dropdowns and Search
     st.sidebar.subheader("📊 Select Data Sources")
 
     if 'all_data_sources' in st.session_state and st.session_state.all_data_sources:
@@ -542,64 +546,93 @@ try:
                 file_groups[file_key] = []
             file_groups[file_key].append((key, info))
 
-        # Initialize selected data sources if not set
-        if 'selected_data_sources' not in st.session_state:
-            # Select first sheet from each file by default
-            st.session_state.selected_data_sources = []
-            for file_key, sources in file_groups.items():
-                if sources:
-                    st.session_state.selected_data_sources.append(sources[0][0])
+        # Select file/group first
+        file_options = list(file_groups.keys())
+        file_display_names = {
+            'maternity': 'Maternity Register',
+            'anc1': 'ANC Register 1',
+            'anc2': 'ANC Register 2',
+            'under5': 'Under-5 Register',
+            'anonymized': 'Anonymized Data'
+        }
 
-        # Create checkboxes for each data source
-        selected_keys = []
-        for file_key, sources in file_groups.items():
-            with st.sidebar.expander(f"📁 {file_key.upper()} ({len(sources)} sheets)", expanded=True):
-                for key, info in sources:
-                    is_checked = st.checkbox(
-                        f"{info['name']} ({info['records']:,} records)",
-                        value=key in st.session_state.selected_data_sources,
-                        key=f"checkbox_{key}"
-                    )
-                    if is_checked:
-                        selected_keys.append(key)
+        # Create display names with counts
+        file_display_with_count = [
+            f"{file_display_names.get(f, f.upper())} ({len(file_groups[f])} sheets)"
+            for f in file_options
+        ]
 
-        # Update session state
-        st.session_state.selected_data_sources = selected_keys
+        selected_file_index = st.sidebar.selectbox(
+            "📁 Select Data File",
+            range(len(file_options)),
+            format_func=lambda i: file_display_with_count[i],
+            key="select_file"
+        )
 
-        # Combine selected data sources or show dropdown for single selection
-        if len(selected_keys) > 0:
-            st.sidebar.subheader("🔍 Active Dataset")
-            if len(selected_keys) == 1:
-                # Single selection - show that data
-                active_key = selected_keys[0]
-                st.session_state.current_df = st.session_state.all_data_sources[active_key]['data']
-                st.session_state.data_source = f"integrated ({st.session_state.all_data_sources[active_key]['name']})"
-                st.sidebar.info(f"Using: {st.session_state.all_data_sources[active_key]['name']}")
-            else:
-                # Multiple selections - combine or let user choose
-                combine_mode = st.sidebar.radio(
-                    "Multiple Selection Mode",
-                    ["Combine All", "Choose Active"],
-                    help="Combine all selected data or choose one to view"
-                )
+        selected_file = file_options[selected_file_index]
+        sources = file_groups[selected_file]
 
-                if combine_mode == "Combine All":
-                    # Combine all selected dataframes
-                    combined_dfs = []
-                    for key in selected_keys:
-                        combined_dfs.append(st.session_state.all_data_sources[key]['data'])
-                    st.session_state.current_df = pd.concat(combined_dfs, ignore_index=True)
-                    st.session_state.data_source = f"combined ({len(selected_keys)} sources)"
-                    st.sidebar.success(f"Combined {len(selected_keys)} data sources")
-                else:
-                    # Let user choose which one to view
-                    options = [st.session_state.all_data_sources[k]['name'] for k in selected_keys]
-                    selected_option = st.sidebar.selectbox("Choose Active Dataset", options)
-                    active_key = [k for k in selected_keys if st.session_state.all_data_sources[k]['name'] == selected_option][0]
-                    st.session_state.current_df = st.session_state.all_data_sources[active_key]['data']
-                    st.session_state.data_source = f"integrated ({st.session_state.all_data_sources[active_key]['name']})"
+        # Search box for filtering sheets
+        search_query = st.sidebar.text_input(
+            "🔍 Search sheets...",
+            placeholder="Type to filter (e.g., '2014', '01', 'Master')",
+            key="search_sheets"
+        ).lower()
+
+        # Filter sheets based on search
+        if search_query:
+            filtered_sources = [
+                (k, info) for k, info in sources
+                if search_query in info['name'].lower() or search_query in info['sheet_name'].lower()
+            ]
         else:
-            st.sidebar.warning("⚠️ No data sources selected")
+            filtered_sources = sources
+
+        # Display matching sheets count
+        if search_query:
+            st.sidebar.caption(f"Showing {len(filtered_sources)} of {len(sources)} sheets")
+
+        # Select sheet from dropdown
+        if filtered_sources:
+            sheet_options = [(k, info) for k, info in filtered_sources]
+            sheet_display_names = [
+                f"{info['sheet_name']} ({info['records']:,} records)"
+                for k, info in sheet_options
+            ]
+
+            selected_sheet_index = st.sidebar.selectbox(
+                "📋 Select Sheet",
+                range(len(sheet_options)),
+                format_func=lambda i: sheet_display_names[i],
+                key="select_sheet"
+            )
+
+            selected_key, selected_info = sheet_options[selected_sheet_index]
+
+            # Load the selected data
+            st.session_state.current_df = selected_info['data']
+            st.session_state.data_source = f"integrated ({selected_info['name']})"
+
+            # Display active dataset info
+            st.sidebar.markdown("---")
+            st.sidebar.subheader("🔍 Active Dataset")
+            st.sidebar.info(f"**File:** {file_display_names.get(selected_file, selected_file.upper())}")
+            st.sidebar.info(f"**Sheet:** {selected_info['sheet_name']}")
+            st.sidebar.info(f"**Records:** {selected_info['records']:,}")
+            st.sidebar.info(f"**Columns:** {len(selected_info['data'].columns)}")
+
+            # Quick action buttons
+            col1, col2 = st.sidebar.columns(2)
+            with col1:
+                if st.button("📊 View Data", key="btn_view_data", use_container_width=True):
+                    st.session_state.page = "Executive Overview"
+                    st.rerun()
+            with col2:
+                if st.button("📈 Trends", key="btn_view_trends", use_container_width=True):
+                    st.session_state.page = "Trend Analysis"
+                    st.rerun()
+        else:
+            st.sidebar.warning("⚠️ No sheets match your search")
             st.session_state.current_df = None
     else:
         st.sidebar.warning("⚠️ No data loaded yet")
@@ -620,6 +653,17 @@ try:
             if uploaded_file.name.endswith('.csv'):
                 df_custom = pd.read_csv(uploaded_file)
                 st.sidebar.success(f"✅ Loaded {len(df_custom):,} records from CSV")
+
+                # Add to data sources
+                sheet_key = f"uploaded_csv_{uploaded_file.name}"
+                st.session_state.all_data_sources[sheet_key] = {
+                    'name': f"Uploaded CSV - {uploaded_file.name}",
+                    'data': df_custom,
+                    'records': len(df_custom),
+                    'sheet_name': uploaded_file.name,
+                    'file_key': 'uploaded'
+                }
+
                 st.session_state.current_df = df_custom
                 st.session_state.data_source = "uploaded"
             else:
