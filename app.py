@@ -426,13 +426,13 @@ except Exception as e:
 try:
     st.sidebar.header("Data Source & Filters")
 
-    # Auto-load ALL data on startup if not already loaded
-    if 'all_data_sources' not in st.session_state:
+    # ALWAYS auto-load ALL data on startup and if data is missing
+    if 'all_data_sources' not in st.session_state or not st.session_state.all_data_sources:
         st.sidebar.info("🔄 Auto-loading ALL integrated data sources...")
-        
+
         # Initialize data sources dictionary
         st.session_state.all_data_sources = {}
-        
+
         # Check available files
         data_files = {
             "maternity": ("Maternity Register", MATERNITY_FILE),
@@ -440,7 +440,7 @@ try:
             "anc2": ("ANC Register 2", ANC_FILE_2),
             "under5": ("Under-5 Register", UNDER5_FILE)
         }
-        
+
         # Load ALL available files with ALL sheets
         total_loaded = 0
         for key, (name, filepath) in data_files.items():
@@ -448,7 +448,7 @@ try:
                 try:
                     # Load all sheets from the Excel file
                     all_sheets = load_excel_all_sheets(filepath)
-                    
+
                     if all_sheets:
                         # Store each sheet as a separate data source
                         for sheet_name, df_sheet in all_sheets.items():
@@ -466,7 +466,7 @@ try:
                         st.sidebar.warning(f"⚠️ No sheets found in {name}")
                 except Exception as e:
                     st.sidebar.warning(f"⚠️ Could not load {name}: {e}")
-        
+
         # Also load anonymized data if available (all sheets)
         sample_file = LOCAL_DATA_DIR / "anonymized_data_kg_export.xlsx"
         if sample_file.exists():
@@ -488,7 +488,7 @@ try:
                     st.sidebar.warning("⚠️ No sheets found in anonymized data")
             except Exception as e:
                 st.sidebar.warning(f"⚠️ Could not load anonymized data: {e}")
-        
+
         if total_loaded > 0:
             st.sidebar.success(f"✅ Successfully loaded {total_loaded} data sources")
             # Set default to first maternity sheet if available, otherwise first available
@@ -503,6 +503,16 @@ try:
                 st.session_state.data_source = f"integrated ({st.session_state.all_data_sources[first_key]['name']})"
         else:
             st.sidebar.warning("⚠️ No integrated data found. Please upload a dataset.")
+
+    # ALWAYS ensure current_df is set if data exists
+    if st.session_state.all_data_sources and (st.session_state.current_df is None):
+        maternity_keys = [k for k in st.session_state.all_data_sources.keys() if k.startswith('maternity_')]
+        if maternity_keys:
+            first_key = maternity_keys[0]
+        else:
+            first_key = list(st.session_state.all_data_sources.keys())[0]
+        st.session_state.current_df = st.session_state.all_data_sources[first_key]['data']
+        st.session_state.data_source = f"integrated ({st.session_state.all_data_sources[first_key]['name']})"
 
     # Data Source Selection with Checkboxes
     st.sidebar.subheader("📊 Select Data Sources")
@@ -582,6 +592,7 @@ try:
 
     # Upload Custom Dataset option
     st.sidebar.subheader("📤 Upload Custom Dataset")
+    st.sidebar.info("Upload additional data to use alongside auto-loaded data")
     uploaded_file = st.sidebar.file_uploader(
         "Upload Dataset (CSV/Excel)",
         type=['csv', 'xlsx', 'xls'],
@@ -638,6 +649,44 @@ except Exception as e:
             st.sidebar.success(f"✅ {name}")
         else:
             st.sidebar.warning(f"⚠️ {name} (not found)")
+
+    # ALWAYS load data if not loaded
+    if 'all_data_sources' not in st.session_state or not st.session_state.all_data_sources:
+        st.session_state.all_data_sources = {}
+        for key, (name, filepath) in data_files.items():
+            if filepath.exists():
+                try:
+                    all_sheets = load_excel_all_sheets(filepath)
+                    if all_sheets:
+                        for sheet_name, df_sheet in all_sheets.items():
+                            sheet_key = f"{key}_{sheet_name}"
+                            st.session_state.all_data_sources[sheet_key] = {
+                                'name': f"{name} - {sheet_name}",
+                                'data': df_sheet,
+                                'records': len(df_sheet),
+                                'sheet_name': sheet_name,
+                                'file_key': key
+                            }
+                except Exception as e:
+                    pass
+
+        # Also load anonymized data
+        sample_file = LOCAL_DATA_DIR / "anonymized_data_kg_export.xlsx"
+        if sample_file.exists():
+            try:
+                all_sheets = load_excel_all_sheets(sample_file)
+                if all_sheets:
+                    for sheet_name, df_sheet in all_sheets.items():
+                        sheet_key = f"anonymized_{sheet_name}"
+                        st.session_state.all_data_sources[sheet_key] = {
+                            'name': f"Anonymized Data - {sheet_name}",
+                            'data': df_sheet,
+                            'records': len(df_sheet),
+                            'sheet_name': sheet_name,
+                            'file_key': 'anonymized'
+                        }
+            except Exception as e:
+                pass
 
     # Set default current_df if not set
     if st.session_state.all_data_sources and (st.session_state.current_df is None):
