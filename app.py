@@ -472,7 +472,7 @@ try:
             with cols[j]:
                 is_active = st.session_state.page == page_name
                 button_type = "primary" if is_active else "secondary"
-                if st.button(label, use_container_width=True, key=key, type=button_type):
+                if st.button(label, width=True, key=key, type=button_type):
                     st.session_state.page = page_name
                     st.rerun()
         if i + 5 < len(nav_items):
@@ -679,11 +679,11 @@ try:
             # Quick action buttons
             col1, col2 = st.sidebar.columns(2)
             with col1:
-                if st.button("📊 View Data", key="btn_view_data", use_container_width=True):
+                if st.button("📊 View Data", key="btn_view_data", width=True):
                     st.session_state.page = "Executive Overview"
                     st.rerun()
             with col2:
-                if st.button("📈 Trends", key="btn_view_trends", use_container_width=True):
+                if st.button("📈 Trends", key="btn_view_trends", width=True):
                     st.session_state.page = "Trend Analysis"
                     st.rerun()
         else:
@@ -965,7 +965,7 @@ try:
                 </ul>
             </div>
             """, unsafe_allow_html=True)
-            if st.button("📊 View Graphs", key="btn_mortality_grid", type="primary", use_container_width=True):
+            if st.button("📊 View Graphs", key="btn_mortality_grid", type="primary", width=True):
                 st.session_state.page = "Mortality Rates"
                 st.rerun()
         
@@ -984,7 +984,7 @@ try:
                 </ul>
             </div>
             """, unsafe_allow_html=True)
-            if st.button("📊 View Graphs", key="btn_trends_grid", type="primary", use_container_width=True):
+            if st.button("📊 View Graphs", key="btn_trends_grid", type="primary", width=True):
                 st.session_state.page = "Trend Analysis"
                 st.rerun()
         
@@ -1003,7 +1003,7 @@ try:
                 </ul>
             </div>
             """, unsafe_allow_html=True)
-            if st.button("📊 View Graphs", key="btn_rootcauses_grid", type="primary", use_container_width=True):
+            if st.button("📊 View Graphs", key="btn_rootcauses_grid", type="primary", width=True):
                 st.session_state.page = "Root-Cause Analysis"
                 st.rerun()
         
@@ -1042,7 +1042,7 @@ try:
                                      color='Category',
                                      title='Maternal Mortality Distribution',
                                      color_discrete_map={'Maternal Deaths': '#EF4444', 'Live Mothers': '#10B981'})
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig, width=True)
                     else:
                         st.bar_chart(mmr_data.set_index('Category')['Count'])
                 
@@ -1069,7 +1069,7 @@ try:
                         fig = px.pie(neonatal_data, values='Count', names='Status',
                                      title='Neonatal Birth Outcomes',
                                      color_discrete_map={'Stillbirths': '#EF4444', 'Live Births': '#10B981'})
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig, width=True)
                     else:
                         st.bar_chart(neonatal_data.set_index('Status')['Count'])
                 
@@ -1089,7 +1089,7 @@ try:
                                              title='Distribution of APGAR Scores',
                                              labels={'APGAR Score': 'APGAR Score'})
                             fig.update_layout(bargap=0.2)
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, width=True)
                 
                 st.success("✅ Maternal and neonatal mortality analysis complete")
             else:
@@ -1117,7 +1117,7 @@ try:
                                              labels={'Age': 'Age (years)'},
                                              color_discrete_sequence=['#3B82F6'])
                             fig.update_layout(bargap=0.2)
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, width=True)
                 
                 # Birth Weight Trends
                 st.markdown("### Birth Weight Distribution")
@@ -1139,7 +1139,7 @@ try:
                             fig.update_layout(bargap=0.2)
                             fig.add_vline(x=2500, line_dash="dash", line_color="red", 
                                          annotation_text="Low Birth Weight Threshold")
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, width=True)
                 
                 # Parity Distribution
                 st.markdown("### Parity Distribution")
@@ -1158,7 +1158,7 @@ try:
                                              labels={'Parity': 'Number of Previous Births'},
                                              color_discrete_sequence=['#8B5CF6'])
                             fig.update_layout(bargap=0.2)
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, width=True)
                 
                 # Gravidae Distribution
                 st.markdown("### Gravidae Distribution")
@@ -1177,7 +1177,7 @@ try:
                                              labels={'Gravidae': 'Number of Pregnancies'},
                                              color_discrete_sequence=['#F59E0B'])
                             fig.update_layout(bargap=0.2)
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, width=True)
                 
                 st.success("✅ Time-series trend analysis complete")
             else:
@@ -1204,7 +1204,7 @@ try:
                                      title='Top 10 Delivery Complications',
                                      labels={'x': 'Count', 'y': 'Complication'},
                                      color_discrete_sequence=['#EF4444'])
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig, width=True)
                     else:
                         st.bar_chart(complications)
                 
@@ -1233,7 +1233,7 @@ try:
                                          annotation_text="PPH Threshold")
                             fig.add_vline(x=1000, line_dash="dash", line_color="red", 
                                          annotation_text="Severe PPH")
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, width=True)
                 
                 # Risk Factor Analysis
                 st.markdown("### High-Risk Factors Distribution")
@@ -1260,7 +1260,7 @@ try:
                                      title='High-Risk Factors Distribution',
                                      color='Count',
                                      color_continuous_scale='Reds')
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig, width=True)
                     else:
                         st.bar_chart(risk_df.set_index('Risk Factor')['Count'])
                 
@@ -1445,7 +1445,7 @@ if st.session_state.page == 'Mortality Rates':
                              text='Count')
                 fig.update_traces(texttemplate='%{text:,}', textposition='outside')
                 fig.update_layout(showlegend=False, yaxis_title="Count")
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width=True)
             else:
                 mmr_data = pd.DataFrame({
                     'Category': ['Maternal Deaths', 'Live Mothers'],
@@ -1483,7 +1483,7 @@ if st.session_state.page == 'Mortality Rates':
                              color_discrete_map={'Stillbirths': '#EF4444', 'Live Births': '#10B981'},
                              hole=0.3)
                 fig.update_traces(textposition='inside', textinfo='percent+label')
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width=True)
             else:
                 neonatal_data = pd.DataFrame({
                     'Status': ['Stillbirths', 'Live Births'],
@@ -1517,7 +1517,7 @@ if st.session_state.page == 'Mortality Rates':
                     fig.update_layout(bargap=0.2)
                     fig.update_xaxes(title_text="APGAR Score")
                     fig.update_yaxes(title_text="Count")
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width=True)
                 else:
                     st.bar_chart(apgar_scores.value_counts().sort_index())
         
@@ -1559,7 +1559,7 @@ if st.session_state.page == 'Trend Analysis':
                     fig.update_layout(bargap=0.2)
                     fig.update_xaxes(title_text="Age (years)")
                     fig.update_yaxes(title_text="Count")
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width=True)
                 else:
                     st.bar_chart(age_data.value_counts().sort_index())
         
@@ -1593,7 +1593,7 @@ if st.session_state.page == 'Trend Analysis':
                                  annotation_text="High Birth Weight Threshold (4000g)")
                     fig.update_xaxes(title_text="Birth Weight (grams)")
                     fig.update_yaxes(title_text="Count")
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width=True)
                 else:
                     st.bar_chart(birth_weight.value_counts().sort_index())
         
@@ -1623,7 +1623,7 @@ if st.session_state.page == 'Trend Analysis':
                     fig.update_layout(bargap=0.2)
                     fig.update_xaxes(title_text="Number of Previous Births")
                     fig.update_yaxes(title_text="Count")
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width=True)
                 else:
                     st.bar_chart(parity_data.value_counts().sort_index())
         
@@ -1653,7 +1653,7 @@ if st.session_state.page == 'Trend Analysis':
                     fig.update_layout(bargap=0.2)
                     fig.update_xaxes(title_text="Number of Pregnancies")
                     fig.update_yaxes(title_text="Count")
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width=True)
                 else:
                     st.bar_chart(gravidae_data.value_counts().sort_index())
         
@@ -1694,7 +1694,7 @@ if st.session_state.page == 'Root-Cause Analysis':
                              text=complications.values)
                 fig.update_traces(texttemplate='%{text:,}', textposition='outside')
                 fig.update_layout(showlegend=False, xaxis_title="Count", yaxis_title="Complication")
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width=True)
             else:
                 st.bar_chart(complications)
         
@@ -1731,7 +1731,7 @@ if st.session_state.page == 'Root-Cause Analysis':
                                  annotation_text="Severe PPH (1000ml)")
                     fig.update_xaxes(title_text="Blood Loss (ml)")
                     fig.update_yaxes(title_text="Count")
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width=True)
                 else:
                     st.bar_chart(blood_loss.value_counts().sort_index())
         
@@ -1786,7 +1786,7 @@ if st.session_state.page == 'Root-Cause Analysis':
                              text='Count')
                 fig.update_traces(texttemplate='%{text:,}', textposition='outside')
                 fig.update_layout(showlegend=False, xaxis_title="Count", yaxis_title="Risk Factor")
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width=True)
             else:
                 st.bar_chart(risk_df.set_index('Risk Factor')['Count'])
         
@@ -2105,7 +2105,7 @@ if st.session_state.page == 'BERT-LLM-KG Pipeline':
         )
         col_close, col_zoom = st.columns([1, 2])
         with col_close:
-            if st.button("✖️ Close / Minimize", key="close_enlarged_focus_btn", type="primary", use_container_width=True):
+            if st.button("✖️ Close / Minimize", key="close_enlarged_focus_btn", type="primary", width=True):
                 st.session_state.enlarged_chart_key = None
                 st.rerun()
         with col_zoom:
@@ -2143,7 +2143,7 @@ if st.session_state.page == 'BERT-LLM-KG Pipeline':
                     is_active = (st.session_state.enlarged_chart_key == key)
                     btn_label = "✖️ Minimize" if is_active else "🔍 Enlarge Chart"
                     btn_type = "primary" if is_active else "secondary"
-                    if st.button(btn_label, key=f"btn_enlarge_{key}", type=btn_type, use_container_width=True):
+                    if st.button(btn_label, key=f"btn_enlarge_{key}", type=btn_type, width=True):
                         st.session_state.enlarged_chart_key = None if is_active else key
                         st.rerun()
                     
@@ -2905,7 +2905,7 @@ elif st.session_state.page == 'Moderate Risk':
                     "Duration": ["Pre-conception to 12 weeks", "Throughout pregnancy", "Throughout pregnancy", "Throughout pregnancy", "Throughout pregnancy", "From 12 weeks if indicated"],
                     "Purpose": ["Neural tube defect prevention", "Anemia prevention/treatment", "Blood pressure control", "Bone health", "Fetal brain development", "Preeclampsia prevention"]
                 }
-                st.dataframe(pd.DataFrame(supplement_data), use_container_width=True, hide_index=True)
+                st.dataframe(pd.DataFrame(supplement_data), width=True, hide_index=True)
             
             with tab2:
                 st.markdown("#### 🩺 Intensive Monitoring Parameters")
@@ -2946,7 +2946,7 @@ elif st.session_state.page == 'Moderate Risk':
                     "Ultrasound": ["", "", "✓", "", "✓", "", "", "", "✓", "", ""],
                     "Specialist Review": ["", "✓", "✓", "✓", "✓", "✓", "✓", "✓", "✓", "✓", "✓"]
                 }
-                st.dataframe(pd.DataFrame(schedule_data), use_container_width=True, hide_index=True)
+                st.dataframe(pd.DataFrame(schedule_data), width=True, hide_index=True)
             
             with tab3:
                 st.markdown("#### ⚠️ Risk-Specific Interventions")
@@ -3044,7 +3044,7 @@ elif st.session_state.page == 'Moderate Risk':
                     "Timing": ["At birth", "At birth", "6 weeks", "10 weeks", "14 weeks", "6 weeks", "10 weeks", "14 weeks", "6 weeks", "10 weeks", "14 weeks", "6 weeks", "10 weeks", "At birth", "9 months"],
                     "Purpose": ["Tuberculosis", "Polio", "Polio", "Polio", "Polio", "Diphtheria, Pertussis, Tetanus, Hep B, Hib", "Diphtheria, Pertussis, Tetanus, Hep B, Hib", "Diphtheria, Pertussis, Tetanus, Hep B, Hib", "Pneumococcal", "Pneumococcal", "Pneumococcal", "Rotavirus", "Rotavirus", "Hepatitis B", "Measles"]
                 }
-                st.dataframe(pd.DataFrame(immunization_data), use_container_width=True, hide_index=True)
+                st.dataframe(pd.DataFrame(immunization_data), width=True, hide_index=True)
             
             st.markdown("---")
             st.warning("💡 **Professional Note:** This enhanced care plan follows WHO guidelines for moderate-risk pregnancies. Regular specialist consultation and close monitoring are essential. Always consult with your healthcare provider for personalized medical advice.")
@@ -3251,7 +3251,7 @@ elif st.session_state.page == 'Low Risk':
                     "Duration": ["Pre-conception to 12 weeks", "Throughout pregnancy", "Throughout pregnancy", "Throughout pregnancy", "Throughout pregnancy"],
                     "Purpose": ["Neural tube defect prevention", "Anemia prevention", "Bone health", "Bone health", "Thyroid function"]
                 }
-                st.dataframe(pd.DataFrame(supplement_data), use_container_width=True, hide_index=True)
+                st.dataframe(pd.DataFrame(supplement_data), width=True, hide_index=True)
             
             with tab2:
                 st.markdown("#### 🩺 Monitoring Parameters")
@@ -3288,7 +3288,7 @@ elif st.session_state.page == 'Low Risk':
                     "Fetal Heart Rate": ["", "✓", "✓", "✓", "✓", "✓", "✓", "✓"],
                     "Fetal Movements": ["", "", "", "", "", "✓", "✓", "✓"]
                 }
-                st.dataframe(pd.DataFrame(schedule_data), use_container_width=True, hide_index=True)
+                st.dataframe(pd.DataFrame(schedule_data), width=True, hide_index=True)
             
             with tab3:
                 st.markdown("#### ⚠️ Danger Signs Education")
@@ -3373,7 +3373,7 @@ elif st.session_state.page == 'Low Risk':
                     "Timing": ["At birth", "At birth", "6 weeks", "10 weeks", "14 weeks", "6 weeks", "10 weeks", "14 weeks", "6 weeks", "10 weeks", "14 weeks", "6 weeks", "10 weeks"],
                     "Purpose": ["Tuberculosis", "Polio", "Polio", "Polio", "Polio", "Diphtheria, Pertussis, Tetanus, Hep B, Hib", "Diphtheria, Pertussis, Tetanus, Hep B, Hib", "Diphtheria, Pertussis, Tetanus, Hep B, Hib", "Pneumococcal", "Pneumococcal", "Pneumococcal", "Rotavirus", "Rotavirus"]
                 }
-                st.dataframe(pd.DataFrame(immunization_data), use_container_width=True, hide_index=True)
+                st.dataframe(pd.DataFrame(immunization_data), width=True, hide_index=True)
             
             st.markdown("---")
             st.info("💡 **Professional Note:** This care plan follows WHO guidelines for low-risk pregnancies. Always consult with your healthcare provider for personalized medical advice tailored to your specific situation.")
