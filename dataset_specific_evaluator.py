@@ -406,7 +406,7 @@ class DatasetSpecificEvaluator:
     def _validate_pnc_record(self, row: pd.Series) -> List[str]:
         """Validate a single PNC record."""
         errors = []
-        rules = self._pnc_rules
+        rules = self.pnc_rules
         
         # Check postnatal day
         day = self._get_numeric_value(row, ['Postnatal Day', 'Day Postpartum', 'PNC Day'])
@@ -499,7 +499,7 @@ class DatasetSpecificEvaluator:
     def _validate_under5_record(self, row: pd.Series) -> List[str]:
         """Validate a single Under-5 record."""
         errors = []
-        rules = self._under5_rules
+        rules = self.under5_rules
         
         # Check age
         age = self._get_numeric_value(row, ['Age Months', 'Age in Months', 'age_months'])
