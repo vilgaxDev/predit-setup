@@ -424,6 +424,26 @@ except Exception as e:
 st.markdown("---")
 st.markdown("### Navigation")
 
+# Add custom CSS for responsive mobile navigation
+st.markdown("""
+<style>
+/* Responsive navigation styling */
+@media (max-width: 768px) {
+    .stButton button {
+        font-size: 11px !important;
+        padding: 6px 3px !important;
+        min-height: 40px !important;
+    }
+}
+@media (min-width: 769px) and (max-width: 1024px) {
+    .stButton button {
+        font-size: 12px !important;
+        padding: 8px 4px !important;
+    }
+}
+</style>
+""", unsafe_allow_html=True)
+
 # Define navigation items
 nav_items = [
     ("📊 Executive", "Executive Overview", "nav_exec"),
@@ -444,31 +464,19 @@ nav_items = [
 ]
 
 try:
-    # Split into two rows: 8 in first row, 7 in second row
-    row1_items = nav_items[:8]
-    row2_items = nav_items[8:]
-    
-    # First row
-    cols_row1 = st.columns(8)
-    for i, (label, page_name, key) in enumerate(row1_items):
-        with cols_row1[i]:
-            is_active = st.session_state.page == page_name
-            button_type = "primary" if is_active else "secondary"
-            if st.button(label, use_container_width=True, key=key, type=button_type):
-                st.session_state.page = page_name
-                st.rerun()
-    
-    st.markdown("")  # Add spacing between rows
-    
-    # Second row
-    cols_row2 = st.columns(7)
-    for i, (label, page_name, key) in enumerate(row2_items):
-        with cols_row2[i]:
-            is_active = st.session_state.page == page_name
-            button_type = "primary" if is_active else "secondary"
-            if st.button(label, use_container_width=True, key=key, type=button_type):
-                st.session_state.page = page_name
-                st.rerun()
+    # Responsive grid: 5 columns per row (3 rows) - works well on both desktop and mobile
+    for i in range(0, len(nav_items), 5):
+        row_items = nav_items[i:i+5]
+        cols = st.columns(len(row_items))
+        for j, (label, page_name, key) in enumerate(row_items):
+            with cols[j]:
+                is_active = st.session_state.page == page_name
+                button_type = "primary" if is_active else "secondary"
+                if st.button(label, use_container_width=True, key=key, type=button_type):
+                    st.session_state.page = page_name
+                    st.rerun()
+        if i + 5 < len(nav_items):
+            st.markdown("")  # Add spacing between rows
 
     if st.session_state.page == "Detailed Metrics":
         st.session_state.page = "Executive Overview"
