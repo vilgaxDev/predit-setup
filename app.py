@@ -103,6 +103,30 @@ try:
 except ImportError as e:
     NER_EVALUATION_AVAILABLE = False
 
+try:
+    from expert_template_manager import ExpertTemplateManager
+    EXPERT_TEMPLATE_AVAILABLE = True
+except ImportError as e:
+    EXPERT_TEMPLATE_AVAILABLE = False
+
+try:
+    from multi_dataset_evaluator import MultiDatasetEvaluator
+    MULTI_DATASET_EVAL_AVAILABLE = True
+except ImportError as e:
+    MULTI_DATASET_EVAL_AVAILABLE = False
+
+try:
+    from dataset_specific_evaluator import DatasetSpecificEvaluator
+    DATASET_SPECIFIC_EVAL_AVAILABLE = True
+except ImportError as e:
+    DATASET_SPECIFIC_EVAL_AVAILABLE = False
+
+try:
+    from re_identification_risk import ReIdentificationRiskAssessment, assess_re_identification_risk
+    RISK_ASSESSMENT_AVAILABLE = True
+except ImportError as e:
+    RISK_ASSESSMENT_AVAILABLE = False
+
 # Data and pipeline paths remain relative to the deployed project.
 LOCAL_DATA_DIR = Path(__file__).parent
 PROJECT_DATA_DIR = LOCAL_DATA_DIR.parent
@@ -405,6 +429,8 @@ col1, col2, col3, col4, col5, col6, col7, col8, col9, col10 = st.columns(10)
 nav_items = [
     ("📊 Executive", "Executive Overview", "nav_exec"),
     ("🤖 BERT-LLM-KG", "BERT-LLM-KG Pipeline", "nav_bert"),
+    ("📊 Multi-Dataset", "Multi-Dataset Evaluation", "nav_multi"),
+    ("🔒 Risk Assess", "Re-Identification Risk", "nav_risk_assess"),
     ("⚠️ High-Risk", "High-Risk Register", "nav_risk"),
     ("🟡 Moderate", "Moderate Risk", "nav_moderate"),
     ("🟢 Low Risk", "Low Risk", "nav_low"),
@@ -419,7 +445,7 @@ nav_items = [
 ]
 
 try:
-    cols = st.columns(13)
+    cols = st.columns(15)
     for i, (label, page_name, key) in enumerate(nav_items):
         with cols[i]:
             is_active = st.session_state.page == page_name
@@ -458,6 +484,7 @@ try:
         # Load ALL available files with ALL sheets
         total_loaded = 0
         for key, (name, filepath) in data_files.items():
+            st.sidebar.write(f"Checking {name}...")
             if filepath.exists():
                 try:
                     # Load all sheets from the Excel file
@@ -480,6 +507,10 @@ try:
                         st.sidebar.warning(f"⚠️ No sheets found in {name}")
                 except Exception as e:
                     st.sidebar.warning(f"⚠️ Could not load {name}: {e}")
+                    import traceback
+                    st.sidebar.error(traceback.format_exc())
+            else:
+                st.sidebar.warning(f"⚠️ File not found: {filepath.name}")
 
         # Also load anonymized data if available (all sheets) - check multiple directories
         sample_file = None
@@ -510,19 +541,19 @@ try:
                 st.sidebar.warning(f"⚠️ Could not load anonymized data: {e}")
 
         if total_loaded > 0:
-            st.sidebar.success(f"✅ Successfully loaded {total_loaded} data sources")
             # Set default to first maternity sheet if available, otherwise first available
             maternity_keys = [k for k in st.session_state.all_data_sources.keys() if k.startswith('maternity_')]
             if maternity_keys:
                 first_key = maternity_keys[0]
                 st.session_state.current_df = st.session_state.all_data_sources[first_key]['data']
-                st.session_state.data_source = f"integrated ({st.session_state.all_data_sources[first_key]['name']})"
+                st.session_state.data_source = f'integrated ({st.session_state.all_data_sources[first_key]["name"]})'
             elif st.session_state.all_data_sources:
                 first_key = list(st.session_state.all_data_sources.keys())[0]
                 st.session_state.current_df = st.session_state.all_data_sources[first_key]['data']
-                st.session_state.data_source = f"integrated ({st.session_state.all_data_sources[first_key]['name']})"
+                st.session_state.data_source = f'integrated ({st.session_state.all_data_sources[first_key]["name"]})'
+            st.sidebar.success(f"✅ Successfully loaded {total_loaded} data sources")
         else:
-            st.sidebar.warning("⚠️ No integrated data found. Please upload a dataset.")
+            st.sidebar.warning("⚠️ No data files found. Please upload data below.")
 
     # ALWAYS ensure current_df is set if data exists
     if st.session_state.all_data_sources and (st.session_state.current_df is None):
@@ -639,13 +670,22 @@ try:
 
     st.sidebar.markdown("---")
 
-    # Upload Custom Dataset option
+    # Reload data button
+    if st.sidebar.button("🔄 Reload Data", key="reload_data"):
+        st.session_state.all_data_sources = {}
+        st.session_state.current_df = None
+        st.rerun()
+
+    st.sidebar.markdown("---")
+
+    # Upload Custom Dataset option - ALWAYS visible
     st.sidebar.subheader("📤 Upload Custom Dataset")
-    st.sidebar.info("Upload additional data to use alongside auto-loaded data")
+    st.sidebar.info("Upload your maternal health dataset (CSV/Excel)")
     uploaded_file = st.sidebar.file_uploader(
-        "Upload Dataset (CSV/Excel)",
+        "Choose a file",
         type=['csv', 'xlsx', 'xls'],
-        help="Upload your maternal health dataset"
+        help="Upload your maternal health dataset",
+        key="file_uploader_main"
     )
 
     if uploaded_file is not None:
@@ -2094,6 +2134,386 @@ if st.session_state.page == 'BERT-LLM-KG Pipeline':
                     st.markdown("<div style='margin-bottom:16px;'></div>", unsafe_allow_html=True)
     else:
         st.info("No visualization graphs currently generated. Please run the pipeline to generate charts.")
+
+elif st.session_state.page == 'Multi-Dataset Evaluation':
+    st.header("📊 Multi-Dataset Evaluation")
+    st.info("Collective evaluation across ANC, PNC, and MOH 204A registers with expert template fact extraction")
+    
+    if not MULTI_DATASET_EVAL_AVAILABLE or not DATASET_SPECIFIC_EVAL_AVAILABLE or not EXPERT_TEMPLATE_AVAILABLE:
+        st.error("Required modules not available. Please install expert_template_manager, multi_dataset_evaluator, and dataset_specific_evaluator")
+    else:
+        # Initialize evaluators
+        template_manager = ExpertTemplateManager()
+        multi_evaluator = MultiDatasetEvaluator()
+        dataset_evaluator = DatasetSpecificEvaluator()
+        
+        # Display available templates
+        st.subheader("📋 Available Expert Templates")
+        templates = template_manager.list_templates()
+        
+        if templates:
+            for template in templates:
+                with st.expander(f"{template['template_name']} ({template['register_type']})"):
+                    st.write(f"**Description:** {template['description']}")
+                    st.write(f"**Fields:** {template['field_count']}")
+                    st.write(f"**Template ID:** {template['template_id']}")
+        else:
+            st.info("No templates available")
+        
+        # Load datasets
+        st.subheader("📁 Dataset Loading")
+        
+        ANC_FILE_1 = find_data_file("MOH_405_ANC final JAN 2026.xlsx")
+        UNDER5_FILE = find_data_file("MOH_204A_UNDER5 revised version on jan 2026.xlsx")
+        PNC_FILE = find_data_file("MOH_406_PNC.xlsx")
+        
+        datasets = {}
+        
+        if ANC_FILE_1.exists():
+            try:
+                datasets['anc'] = (pd.read_excel(ANC_FILE_1, engine="openpyxl"), 'ANC')
+                st.success(f"✓ ANC Register loaded: {len(datasets['anc'][0])} records")
+            except Exception as e:
+                st.error(f"✗ Error loading ANC: {e}")
+        
+        if UNDER5_FILE.exists():
+            try:
+                datasets['under5'] = (pd.read_excel(UNDER5_FILE, engine="openpyxl"), 'UNDER5')
+                st.success(f"✓ Under-5 Register loaded: {len(datasets['under5'][0])} records")
+            except Exception as e:
+                st.error(f"✗ Error loading Under-5: {e}")
+        
+        if PNC_FILE.exists():
+            try:
+                datasets['pnc'] = (pd.read_excel(PNC_FILE, engine="openpyxl"), 'PNC')
+                st.success(f"✓ PNC Register loaded: {len(datasets['pnc'][0])} records")
+            except Exception as e:
+                st.error(f"✗ Error loading PNC: {e}")
+        
+        # Run evaluation button
+        st.markdown("---")
+        if st.button("🚀 Run Multi-Dataset Evaluation", type="primary"):
+            if datasets:
+                with st.spinner("Running evaluation... This may take a few minutes."):
+                    try:
+                        # Dataset-specific evaluation
+                        st.subheader("📊 Dataset-Specific Evaluation")
+                        
+                        if 'anc' in datasets:
+                            st.write("**ANC Register Evaluation**")
+                            anc_results = dataset_evaluator.evaluate_anc_register(
+                                datasets['anc'][0],
+                                "MOH 405 ANC Register"
+                            )
+                            col1, col2, col3 = st.columns(3)
+                            col1.metric("Validation Rate", f"{anc_results.validation_rate:.2%}")
+                            col2.metric("HIV Positive Rate", f"{anc_results.hiv_positive_rate:.2%}")
+                            col3.metric("Hypertension Rate", f"{anc_results.hypertension_detection_rate:.2%}")
+                        
+                        if 'pnc' in datasets:
+                            st.write("**PNC Register Evaluation**")
+                            pnc_results = dataset_evaluator.evaluate_pnc_register(
+                                datasets['pnc'][0],
+                                "MOH 406 PNC Register"
+                            )
+                            col1, col2, col3 = st.columns(3)
+                            col1.metric("Maternal Survival", f"{pnc_results.maternal_survival_rate:.2%}")
+                            col2.metric("Neonatal Survival", f"{pnc_results.neonatal_survival_rate:.2%}")
+                            col3.metric("Early PNC Visits", f"{pnc_results.early_pnc_visit_rate:.2%}")
+                        
+                        if 'under5' in datasets:
+                            st.write("**Under-5 Register Evaluation**")
+                            under5_results = dataset_evaluator.evaluate_under5_register(
+                                datasets['under5'][0],
+                                "MOH 204A Under-5 Register"
+                            )
+                            col1, col2, col3 = st.columns(3)
+                            col1.metric("SAM Rate", f"{under5_results.malnutrition_severe_rate:.2%}")
+                            col2.metric("Vaccination Rate", f"{under5_results.vaccination_complete_rate:.2%}")
+                            col3.metric("Growth Monitoring", f"{under5_results.growth_monitoring_completeness:.2%}")
+                        
+                        # Collective evaluation
+                        st.markdown("---")
+                        st.subheader("🔄 Collective Multi-Dataset Evaluation")
+                        
+                        datasets_for_eval = {f"{name}_register": (df, dtype) for name, (df, dtype) in datasets.items()}
+                        collective_metrics = multi_evaluator.evaluate_collective(datasets_for_eval)
+                        
+                        # Display collective metrics
+                        col1, col2, col3, col4 = st.columns(4)
+                        col1.metric("Total Datasets", collective_metrics.total_datasets)
+                        col2.metric("Total Records", f"{collective_metrics.total_records:,}")
+                        col3.metric("Total Facts", f"{collective_metrics.total_facts_extracted:,}")
+                        col4.metric("KG Triples", f"{collective_metrics.total_kg_triples:,}")
+                        
+                        # NER metrics
+                        if collective_metrics.average_ner_precision > 0:
+                            col1, col2, col3 = st.columns(3)
+                            col1.metric("Avg NER Precision", f"{collective_metrics.average_ner_precision:.2%}")
+                            col2.metric("Avg NER Recall", f"{collective_metrics.average_ner_recall:.2%}")
+                            col3.metric("Avg NER F1", f"{collective_metrics.average_ner_f1:.2%}")
+                        
+                        # Quality score
+                        st.metric("Overall Quality Score", f"{collective_metrics.overall_quality_score:.2%}")
+                        
+                        # Per-dataset breakdown
+                        st.markdown("---")
+                        st.subheader("📈 Per-Dataset Breakdown")
+                        
+                        for dm in collective_metrics.dataset_metrics:
+                            with st.expander(f"{dm.dataset_name} ({dm.dataset_type})"):
+                                col1, col2, col3 = st.columns(3)
+                                col1.metric("Records", dm.total_records)
+                                col2.metric("Extraction Rate", f"{dm.extraction_rate:.2%}")
+                                col3.metric("Facts Extracted", dm.facts_extracted)
+                                
+                                col4, col5, col6 = st.columns(3)
+                                col4.metric("KG Triples", dm.kg_triples_generated)
+                                col5.metric("Quality Score", f"{dm.quality_score:.2%}")
+                                
+                                if dm.ner_precision is not None:
+                                    col6.metric("NER F1", f"{dm.ner_f1:.2%}")
+                                else:
+                                    col6.metric("NER F1", "N/A")
+                        
+                        # Save results
+                        output_path = multi_evaluator.save_evaluation_results(collective_metrics)
+                        st.success(f"✓ Evaluation results saved to: {output_path}")
+                        
+                        # Download report
+                        report = multi_evaluator.generate_evaluation_report(collective_metrics)
+                        st.download_button(
+                            label="📥 Download Evaluation Report",
+                            data=report,
+                            file_name="multi_dataset_evaluation_report.txt",
+                            mime="text/plain"
+                        )
+                        
+                    except Exception as e:
+                        st.error(f"Error during evaluation: {e}")
+                        import traceback
+                        st.error(traceback.format_exc())
+            else:
+                st.warning("No datasets loaded. Please ensure ANC, PNC, or Under-5 files are available.")
+        
+        # Expert template management
+        st.markdown("---")
+        st.subheader("🔧 Expert Template Management")
+        
+        st.write("Expert templates define how facts are extracted from clinical registers.")
+        st.write("Templates include:")
+        st.write("- Field definitions with validation rules")
+        st.write("- Knowledge graph predicate mappings")
+        st.write("- Extraction rules for derived facts")
+        st.write("- Ontology mappings for semantic interoperability")
+        
+        with st.expander("View Template Statistics"):
+            for template_id in ['ANC_MOH405', 'PNC_MOH406', 'UNDER5_MOH204A']:
+                stats = template_manager.get_template_statistics(template_id)
+                if stats:
+                    st.write(f"**{stats['template_name']}**")
+                    st.json(stats)
+
+elif st.session_state.page == 'Re-Identification Risk':
+    st.header("🔒 Re-Identification Risk Assessment")
+    st.info("Evaluate re-identification risk of anonymized data using k-anonymity, l-diversity, t-closeness, and linkage attack simulation")
+
+    if not RISK_ASSESSMENT_AVAILABLE:
+        st.error("Re-identification risk assessment module not available. Please install re_identification_risk.py")
+    else:
+        st.markdown("---")
+        
+        # Load data
+        st.subheader("Data Loading")
+        
+        # Check for anonymized data
+        anonymized_file = find_data_file("anonymized_data_kg_export.xlsx")
+        original_file = find_data_file("COMBINE_MOH_333_3replaced_KCHR.xlsx")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if anonymized_file and anonymized_file.exists():
+                st.success(f"✅ Anonymized data found: {anonymized_file.name}")
+            else:
+                st.warning("⚠️ Anonymized data not found")
+        
+        with col2:
+            if original_file and original_file.exists():
+                st.success(f"✅ Original data found: {original_file.name}")
+            else:
+                st.warning("⚠️ Original data not found")
+        
+        st.markdown("---")
+        
+        # Run risk assessment
+        if st.button("🚀 Run Risk Assessment", type="primary"):
+            with st.spinner("Running comprehensive risk assessment..."):
+                try:
+                    # Load data
+                    if original_file and original_file.exists():
+                        original_df = pd.read_excel(original_file)
+                        st.info(f"Loaded {len(original_df)} original records")
+                    else:
+                        original_df = None
+                        st.warning("Original data not available for comparison")
+                    
+                    if anonymized_file and anonymized_file.exists():
+                        anonymized_df = pd.read_excel(anonymized_file)
+                        st.info(f"Loaded {len(anonymized_df)} anonymized records")
+                    else:
+                        st.warning("Anonymized data not available")
+                        anonymized_df = None
+                    
+                    if anonymized_df is not None:
+                        # Run assessment
+                        assessor = ReIdentificationRiskAssessment(anonymized_df, original_df)
+                        
+                        # Display quasi-identifiers and sensitive attributes
+                        st.markdown("### Identified Attributes")
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.write("**Quasi-Identifiers:**")
+                            st.write(assessor.quasi_identifiers)
+                        with col2:
+                            st.write("**Sensitive Attributes:**")
+                            st.write(assessor.sensitive_attributes)
+                        
+                        st.markdown("---")
+                        
+                        # k-Anonymity
+                        st.subheader("k-Anonymity Assessment")
+                        k_results = assessor.calculate_k_anonymity(k=5)
+                        if "error" not in k_results:
+                            col1, col2, col3, col4 = st.columns(4)
+                            col1.metric("k-Value", str(k_results['k_value']))
+                            col2.metric("Violating Classes", str(k_results['violating_classes']))
+                            col3.metric("Violation Rate", f"{k_results['violation_rate']:.2f}%")
+                            col4.metric("Compliant", "✅ Yes" if k_results['k_anonymity_compliant'] else "❌ No")
+                            
+                            if not k_results['k_anonymity_compliant']:
+                                st.warning(f"⚠️ k-Anonymity violation: {k_results['violating_classes']} classes have fewer than {k_results['k_value']} records")
+                        else:
+                            st.error(k_results['error'])
+                        
+                        st.markdown("---")
+                        
+                        # l-Diversity
+                        st.subheader("l-Diversity Assessment")
+                        l_results = assessor.calculate_l_diversity(l=3)
+                        if "error" not in l_results:
+                            for attr, results in l_results.items():
+                                with st.expander(f"Attribute: {attr}"):
+                                    col1, col2, col3 = st.columns(3)
+                                    col1.metric("l-Value", str(results['l_value']))
+                                    col2.metric("Violating Classes", str(results['violating_classes']))
+                                    col3.metric("Compliant", "✅ Yes" if results['l_diversity_compliant'] else "❌ No")
+                        else:
+                            st.error(l_results['error'])
+                        
+                        st.markdown("---")
+                        
+                        # t-Closeness
+                        st.subheader("t-Closeness Assessment")
+                        t_results = assessor.calculate_t_closeness(t=0.25)
+                        if "error" not in t_results:
+                            for attr, results in t_results.items():
+                                with st.expander(f"Attribute: {attr}"):
+                                    col1, col2 = st.columns(2)
+                                    col1.metric("t-Value", str(results['t_value']))
+                                    col2.metric("Max Distance", f"{results['max_distance']:.4f}")
+                                    st.write(f"Compliant: {'✅ Yes' if results['t_closeness_compliant'] else '❌ No'}")
+                        else:
+                            st.error(t_results['error'])
+                        
+                        st.markdown("---")
+                        
+                        # Uniqueness
+                        st.subheader("Uniqueness Assessment")
+                        uniqueness = assessor.check_uniqueness()
+                        if "error" not in uniqueness:
+                            col1, col2, col3 = st.columns(3)
+                            col1.metric("Total Records", f"{uniqueness['total_records']:,}")
+                            col2.metric("Unique Records", f"{uniqueness['unique_records_count']:,}")
+                            col3.metric("Unique Rate", f"{uniqueness['unique_rate']:.2f}%")
+                            
+                            if uniqueness['unique_rate'] > 10:
+                                st.warning(f"⚠️ High uniqueness rate: {uniqueness['unique_rate']:.2f}%")
+                            else:
+                                st.success(f"✅ Low uniqueness rate: {uniqueness['unique_rate']:.2f}%")
+                        else:
+                            st.error(uniqueness['error'])
+                        
+                        st.markdown("---")
+                        
+                        # Linkage Attack Simulation
+                        st.subheader("Linkage Attack Simulation")
+                        linkage = assessor.simulate_linkage_attack()
+                        if "error" not in linkage:
+                            col1, col2, col3 = st.columns(3)
+                            col1.metric("Attempts", str(linkage['total_attempts']))
+                            col2.metric("Successful Linkages", str(linkage['successful_linkages']))
+                            col3.metric("Linkage Rate", f"{linkage['linkage_rate']:.2f}%")
+                            
+                            if linkage['linkage_rate'] == 0:
+                                st.success("✅ EXCELLENT: No successful linkages - re-identification is NOT possible")
+                            elif linkage['linkage_rate'] < 20:
+                                st.info(f"ℹ️ LOW risk: {linkage['linkage_rate']:.2f}% linkage rate")
+                            elif linkage['linkage_rate'] < 50:
+                                st.warning(f"⚠️ MEDIUM risk: {linkage['linkage_rate']:.2f}% linkage rate")
+                            else:
+                                st.error(f"❌ HIGH risk: {linkage['linkage_rate']:.2f}% linkage rate")
+                        else:
+                            st.error(linkage['error'])
+                        
+                        st.markdown("---")
+                        
+                        # Overall Risk Assessment
+                        st.subheader("Overall Risk Assessment")
+                        report = assessor.generate_risk_report()
+                        
+                        # Display risk level
+                        if report['risk_level'] == 'LOW':
+                            st.success(f"🟢 Overall Risk Level: LOW ({report['overall_risk_score']}/100)")
+                        elif report['risk_level'] == 'MEDIUM':
+                            st.warning(f"🟡 Overall Risk Level: MEDIUM ({report['overall_risk_score']}/100)")
+                        else:
+                            st.error(f"🔴 Overall Risk Level: HIGH ({report['overall_risk_score']}/100)")
+                        
+                        if report['risk_factors']:
+                            st.write("**Risk Factors:**")
+                            for factor in report['risk_factors']:
+                                st.write(f"  - {factor}")
+                        else:
+                            st.success("✅ No significant risk factors identified")
+                        
+                        st.markdown("---")
+                        
+                        # Visualizations
+                        st.subheader("Risk Visualizations")
+                        viz_dir = Path(__file__).parent / "risk_assessment_results" / "visualizations"
+                        
+                        if viz_dir.exists():
+                            viz_files = list(viz_dir.glob("*.png"))
+                            if viz_files:
+                                for viz_file in viz_files:
+                                    st.image(str(viz_file), caption=viz_file.stem.replace('_', ' ').title())
+                            else:
+                                st.info("No visualizations available. Run the assessment to generate them.")
+                        else:
+                            st.info("Run the assessment to generate visualizations")
+                        
+                        st.success("✅ Risk assessment complete!")
+                        
+                    else:
+                        st.error("❌ No anonymized data available for risk assessment")
+                
+                except Exception as e:
+                    st.error(f"❌ Error running risk assessment: {e}")
+                    import traceback
+                    st.error(traceback.format_exc())
+        
+        st.markdown("---")
+        st.info("💡 Tip: Run the BERT-LLM-KG Pipeline to generate anonymized data before assessing risk")
 
 elif st.session_state.page == 'High-Risk Register':
     st.subheader("High-Risk Pregnancy Register & Clinical Recommendations")

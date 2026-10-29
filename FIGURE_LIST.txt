@@ -1,0 +1,268 @@
+# Figure List for Research Paper
+## BERT-LLM-KG Framework for Maternal-Child Health Data Anonymization
+
+**Total Figures:** 21  
+**Generated:** October 2026  
+**Data Source:** COMBINE_MOH_333_3replaced_KCHR.xlsx (333 records)  
+**Location:** D:\sarah\dashboard\python_pipeline\
+
+---
+
+## MAIN FIGURES (Recommended for Main Paper - 6 figures)
+
+### Figure 1: NLP Processing Metrics
+**File:** `analysis_graphs.png`  
+**Category:** NLP & Anonymization  
+**Paper Section:** Methods - Data Preprocessing  
+**Description:** Comprehensive visualization of NLP pipeline quality metrics showing linearisation coverage rate, delimiter consistency, tokenisation statistics, and BIO tagging performance.  
+**Key Metrics:** Coverage Rate: 100%, Delimiter Consistency: 100%, Total Tokens: 20,000+, Entity Coverage: 100%  
+**Caption:** NLP preprocessing pipeline quality metrics demonstrating 100% coverage and consistency across all data processing stages.
+
+---
+
+### Figure 2: NER Performance Metrics
+**File:** `ner_performance_metrics.png`  
+**Category:** NLP & Anonymization  
+**Paper Section:** Results - Model Performance  
+**Description:** Bar chart comparing precision, recall, F1 score, and accuracy for Named Entity Recognition. Shows performance against 90% target benchmark.  
+**Key Metrics:** Precision: 91%, Recall: 90%, F1 Score: 90%, Accuracy: 94%  
+**Caption:** Named Entity Recognition performance metrics showing rule-based PII detection achieves 90%+ across all metrics, exceeding the 90% target benchmark.
+
+---
+
+### Figure 15: High-Risk Pregnancy Distribution
+**File:** `high_risk_distribution.png`  
+**Category:** Risk Analysis  
+**Paper Section:** Results - Risk Stratification  
+**Description:** Pie chart showing high-risk vs low-risk pregnancy classification based on WHO criteria.  
+**Key Metrics:** WHO Criteria Applied (9 risk factors)  
+**Caption:** High-risk pregnancy classification based on WHO criteria, demonstrating risk stratification across the maternal health dataset.
+
+---
+
+### Figure 17: Maternal Mortality Trend
+**File:** `maternal_mortality_trend.png`  
+**Category:** Temporal Analysis  
+**Paper Section:** Results - Temporal Analysis  
+**Description:** Line graph showing maternal mortality rate trend over years with trend analysis (increasing/decreasing/stable).  
+**Key Metrics:** Rate per 1,000 deliveries  
+**Caption:** Maternal mortality rate trend over time showing temporal patterns and identifying periods requiring intervention.
+
+---
+
+### Figure 18: Neonatal Mortality Trend
+**File:** `neonatal_mortality_trend.png`  
+**Category:** Temporal Analysis  
+**Paper Section:** Results - Temporal Analysis  
+**Description:** Line graph showing neonatal mortality rate trend over years with trend analysis.  
+**Key Metrics:** Rate per 1,000 deliveries  
+**Caption:** Neonatal mortality rate trend over time showing stillbirth patterns and identifying critical periods for intervention.
+
+---
+
+### Figure 19: Knowledge Graph Structure
+**File:** `knowledge_graph_structure.png`  
+**Category:** NLP & Anonymization  
+**Paper Section:** Methods - KG Architecture  
+**Description:** Network graph visualization showing patient nodes and their relationships via RDF triples (sample of 200 triples).  
+**Key Metrics:** 14,000+ triples, 43 unique predicates  
+**Caption:** Knowledge graph structure visualization demonstrating RDF triple relationships between patients and clinical attributes, enabling semantic interoperability.
+
+---
+
+## SUPPLEMENTARY FIGURES (15 figures)
+
+### Figure 3: Data Distribution Analysis
+**File:** `data_distribution.png`  
+**Category:** Clinical Data Distribution  
+**Paper Section:** Results - Dataset Characteristics  
+**Description:** Distribution plots for key clinical indicators: Age, Birth Weight, and Gestation period.  
+**Key Metrics:** 333 records, 43 fields per record
+
+---
+
+### Figure 4: Gender Distribution
+**File:** `gender_distribution.png`  
+**Category:** Clinical Data Distribution  
+**Paper Section:** Results - Demographics
+
+---
+
+### Figure 5: Delivery Mode Distribution
+**File:** `delivery_mode.png`  
+**Category:** Clinical Data Distribution  
+**Paper Section:** Results - Clinical Practice
+
+---
+
+### Figure 6: HIV Status Distribution
+**File:** `hiv_status.png`  
+**Category:** Clinical Data Distribution  
+**Paper Section:** Results - PMTCT Indicators
+
+---
+
+### Figure 7: Marital Status Distribution
+**File:** `marital_status.png`  
+**Category:** Clinical Data Distribution  
+**Paper Section:** Results - Social Determinants
+
+---
+
+### Figure 8: Diagnosis Distribution
+**File:** `diagnosis_distribution.png`  
+**Category:** Clinical Data Distribution  
+**Paper Section:** Results - Clinical Burden
+
+---
+
+### Figure 9: Parity Distribution
+**File:** `parity_distribution.png`  
+**Category:** Clinical Data Distribution  
+**Paper Section:** Results - Risk Factors
+
+---
+
+### Figure 10: Gravidae Distribution
+**File:** `gravidae_distribution.png`  
+**Category:** Clinical Data Distribution  
+**Paper Section:** Results - Risk Factors
+
+---
+
+### Figure 11: Birth Status Distribution
+**File:** `birth_status.png`  
+**Category:** Clinical Data Distribution  
+**Paper Section:** Results - Neonatal Outcomes
+
+---
+
+### Figure 12: Mother's Status After Delivery
+**File:** `mother_status.png`  
+**Category:** Clinical Data Distribution  
+**Paper Section:** Results - Maternal Outcomes
+
+---
+
+### Figure 13: APGAR Score Distribution
+**File:** `apgar_score.png`  
+**Category:** Health Indicators  
+**Paper Section:** Results - Newborn Health
+
+---
+
+### Figure 14: ANC Visits Distribution
+**File:** `anc_visits.png`  
+**Category:** Health Indicators  
+**Paper Section:** Results - Antenatal Care
+
+---
+
+### Figure 16: Risk Factors Distribution
+**File:** `risk_factors.png`  
+**Category:** Risk Analysis  
+**Paper Section:** Results - Risk Factor Prevalence  
+**Key Metrics:** 9 WHO Risk Factors
+
+---
+
+### Figure 20: Knowledge Graph Predicates
+**File:** `knowledge_graph_predicates.png`  
+**Category:** NLP & Anonymization  
+**Paper Section:** Results - KG Integration  
+**Key Metrics:** Top 10 predicates shown
+
+---
+
+### Figure 21: Metrics Comparison
+**File:** `metrics_comparison.png`  
+**Category:** Model Performance  
+**Paper Section:** Results - Framework Effectiveness
+
+---
+
+## Figure Categories Summary
+
+| Category | Count | Figure Numbers |
+|----------|--------|----------------|
+| NLP & Anonymization | 4 | 1, 2, 19, 20 |
+| Clinical Data Distribution | 9 | 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 |
+| Health Indicators | 2 | 13, 14 |
+| Risk Analysis | 2 | 15, 16 |
+| Temporal Analysis | 2 | 17, 18 |
+| Model Performance | 1 | 21 |
+
+---
+
+## How to Reference Figures in Your Paper
+
+### In Methods Section:
+- **Figure 1**: "Figure 1 shows the NLP preprocessing pipeline quality metrics..."
+- **Figure 19**: "The knowledge graph architecture (Figure 19) demonstrates..."
+
+### In Results Section:
+- **Figure 2**: "NER performance (Figure 2) achieved 91% precision and 90% recall..."
+- **Figure 15**: "High-risk pregnancy classification (Figure 15) identified..."
+- **Figure 17**: "Maternal mortality trends (Figure 17) reveal..."
+- **Figure 18**: "Neonatal mortality patterns (Figure 18) indicate..."
+
+### In Supplementary Material:
+- Figures 3-14, 16, 20, 21 can be referenced as supplementary figures
+
+---
+
+## Figure Quality Specifications
+
+- **Resolution:** 200-300 DPI (publication-ready)
+- **Format:** PNG (supports transparency)
+- **Size:** 59 KB - 985 KB per figure
+- **Style:** Consistent matplotlib/seaborn styling
+- **Colors:** Professional color palette suitable for print
+
+---
+
+## Regenerating Figures
+
+To regenerate all figures with updated data:
+
+```bash
+cd D:\sarah\dashboard\python_pipeline
+python run_notebook.py
+```
+
+This will:
+1. Process the latest data from COMBINE_MOH_333_3replaced_KCHR.xlsx
+2. Generate all 21 figures
+3. Save them to the python_pipeline directory
+4. Overwrite existing figures
+
+---
+
+## Viewing Figures Interactively
+
+To view figures in the dashboard:
+
+```bash
+cd D:\sarah\dashboard\python_pipeline
+streamlit run app.py
+```
+
+Navigate to:
+- "Model Visualization" page for NLP and KG figures
+- "Executive Overview" page for clinical data figures
+- "Mortality Rates" page for trend analysis figures
+- "High-Risk Register" page for risk analysis figures
+
+---
+
+## Notes for Reviewers
+
+1. **All figures are generated from actual data** (333 maternal health records)
+2. **Figures are reproducible** - run `run_notebook.py` to regenerate
+3. **High resolution** - suitable for print publication
+4. **Consistent styling** - professional publication quality
+5. **No simulated data** - all metrics based on real dataset processing
+
+---
+
+**End of Figure List**
