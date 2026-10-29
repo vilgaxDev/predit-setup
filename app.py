@@ -423,7 +423,6 @@ except Exception as e:
 
 st.markdown("---")
 st.markdown("### Navigation")
-col1, col2, col3, col4, col5, col6, col7, col8, col9, col10 = st.columns(10)
 
 # Define navigation items
 nav_items = [
@@ -445,9 +444,26 @@ nav_items = [
 ]
 
 try:
-    cols = st.columns(15)
-    for i, (label, page_name, key) in enumerate(nav_items):
-        with cols[i]:
+    # Split into two rows: 8 in first row, 7 in second row
+    row1_items = nav_items[:8]
+    row2_items = nav_items[8:]
+    
+    # First row
+    cols_row1 = st.columns(8)
+    for i, (label, page_name, key) in enumerate(row1_items):
+        with cols_row1[i]:
+            is_active = st.session_state.page == page_name
+            button_type = "primary" if is_active else "secondary"
+            if st.button(label, use_container_width=True, key=key, type=button_type):
+                st.session_state.page = page_name
+                st.rerun()
+    
+    st.markdown("")  # Add spacing between rows
+    
+    # Second row
+    cols_row2 = st.columns(7)
+    for i, (label, page_name, key) in enumerate(row2_items):
+        with cols_row2[i]:
             is_active = st.session_state.page == page_name
             button_type = "primary" if is_active else "secondary"
             if st.button(label, use_container_width=True, key=key, type=button_type):
