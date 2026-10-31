@@ -178,6 +178,7 @@ def load_excel_all_sheets(filepath):
 MATERNITY_FILE = find_data_file("COMBINE_MOH_333_3replaced_KCHR.xlsx")
 ANC_FILE_1 = find_data_file("MOH_405_ANC final JAN 2026.xlsx")
 ANC_FILE_2 = find_data_file("MOH_405_ANC_20 version 2.xlsx")
+PNC_FILE = find_data_file("MOH_406_PNC_20 Sheets 2 version 2.xlsx")
 UNDER5_FILE = find_data_file("MOH_204A_UNDER5 revised version on jan 2026.xlsx")
 ANNOTATION_DATASETS = [
     ("Maternity Register", "maternity", MATERNITY_FILE),
@@ -424,21 +425,47 @@ except Exception as e:
 st.markdown("---")
 st.markdown("### Navigation")
 
-# Add custom CSS for responsive mobile navigation
+# Add custom CSS for responsive navigation grid
 st.markdown("""
 <style>
-/* Responsive navigation styling */
+/* Navigation container - responsive grid */
+div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlock"] {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+    gap: 12px !important;
+    width: 100% !important;
+}
+
+/* Navigation button styling */
+.stButton button {
+    width: 100% !important;
+    min-width: 140px !important;
+    min-height: 48px !important;
+    padding: 12px 16px !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    line-height: 1.3 !important;
+    transform: none !important;
+    writing-mode: horizontal-tb !important;
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
+    div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlock"] {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)) !important;
+        gap: 8px !important;
+    }
     .stButton button {
         font-size: 11px !important;
-        padding: 6px 3px !important;
-        min-height: 40px !important;
-    }
-}
-@media (min-width: 769px) and (max-width: 1024px) {
-    .stButton button {
-        font-size: 12px !important;
-        padding: 8px 4px !important;
+        padding: 10px 8px !important;
+        min-height: 45px !important;
     }
 }
 </style>
@@ -446,37 +473,46 @@ st.markdown("""
 
 # Define navigation items
 nav_items = [
-    ("📊 Executive", "Executive Overview", "nav_exec"),
-    ("🤖 BERT-LLM-KG", "BERT-LLM-KG Pipeline", "nav_bert"),
-    ("📊 Multi-Dataset", "Multi-Dataset Evaluation", "nav_multi"),
-    ("🔒 Risk Assess", "Re-Identification Risk", "nav_risk_assess"),
-    ("⚠️ High-Risk", "High-Risk Register", "nav_risk"),
-    ("🟡 Moderate", "Moderate Risk", "nav_moderate"),
-    ("🟢 Low Risk", "Low Risk", "nav_low"),
-    ("🧬 HIV", "HIV Seroconversion", "nav_hiv"),
-    ("📈 PMTCT", "PMTCT 5-Year Cascade", "nav_pmtct"),
-    ("📈 Mortality", "Mortality Rates", "nav_mortality"),
-    ("📊 Trends", "Trend Analysis", "nav_trends"),
-    ("🔍 Root Causes", "Root-Cause Analysis", "nav_rootcauses"),
-    ("🔍 Model Insights", "Feature Importance Analysis", "nav_shap"),
-    ("📊 Matrix", "Matrix", "nav_matrix"),
-    ("🔬 Model Vis", "Model Visualization", "nav_model")
+    ("Executive", "Executive Overview", "nav_exec"),
+    ("BERT-LLM-KG", "BERT-LLM-KG Pipeline", "nav_bert"),
+    ("Multi-Dataset", "Multi-Dataset Evaluation", "nav_multi"),
+    ("Risk Assess", "Re-Identification Risk", "nav_risk_assess"),
+    ("High-Risk", "High-Risk Register", "nav_risk"),
+    ("Moderate", "Moderate Risk", "nav_moderate"),
+    ("Low Risk", "Low Risk", "nav_low"),
+    ("HIV", "HIV Seroconversion", "nav_hiv"),
+    ("PMTCT", "PMTCT 5-Year Cascade", "nav_pmtct"),
+    ("Mortality", "Mortality Rates", "nav_mortality"),
+    ("Trends", "Trend Analysis", "nav_trends"),
+    ("Root Causes", "Root-Cause Analysis", "nav_rootcauses"),
+    ("Model Insights", "Feature Importance Analysis", "nav_shap"),
+    ("Matrix", "Matrix", "nav_matrix"),
+    ("Model Vis", "Model Visualization", "nav_model")
 ]
 
 try:
-    # Responsive grid: 5 columns per row (3 rows) - works well on both desktop and mobile
-    for i in range(0, len(nav_items), 5):
-        row_items = nav_items[i:i+5]
-        cols = st.columns(len(row_items))
-        for j, (label, page_name, key) in enumerate(row_items):
-            with cols[j]:
-                is_active = st.session_state.page == page_name
-                button_type = "primary" if is_active else "secondary"
-                if st.button(label, use_container_width=True, key=key, type=button_type):
-                    st.session_state.page = page_name
-                    st.rerun()
-        if i + 5 < len(nav_items):
-            st.markdown("")  # Add spacing between rows
+    # 2 rows: 8 buttons in row 1, 7 buttons in row 2
+    row1_items = nav_items[:8]
+    cols1 = st.columns(8)
+    for j, (label, page_name, key) in enumerate(row1_items):
+        with cols1[j]:
+            is_active = st.session_state.page == page_name
+            button_type = "primary" if is_active else "secondary"
+            if st.button(label, width=True, key=key, type=button_type):
+                st.session_state.page = page_name
+                st.rerun()
+    
+    st.markdown("")  # Spacing between rows
+    
+    row2_items = nav_items[8:]
+    cols2 = st.columns(7)
+    for j, (label, page_name, key) in enumerate(row2_items):
+        with cols2[j]:
+            is_active = st.session_state.page == page_name
+            button_type = "primary" if is_active else "secondary"
+            if st.button(label, width=True, key=key, type=button_type):
+                st.session_state.page = page_name
+                st.rerun()
 
     if st.session_state.page == "Detailed Metrics":
         st.session_state.page = "Executive Overview"
@@ -679,11 +715,11 @@ try:
             # Quick action buttons
             col1, col2 = st.sidebar.columns(2)
             with col1:
-                if st.button("📊 View Data", key="btn_view_data", use_container_width=True):
+                if st.button("📊 View Data", key="btn_view_data", width=True):
                     st.session_state.page = "Executive Overview"
                     st.rerun()
             with col2:
-                if st.button("📈 Trends", key="btn_view_trends", use_container_width=True):
+                if st.button("📈 Trends", key="btn_view_trends", width=True):
                     st.session_state.page = "Trend Analysis"
                     st.rerun()
         else:
@@ -965,7 +1001,7 @@ try:
                 </ul>
             </div>
             """, unsafe_allow_html=True)
-            if st.button("📊 View Graphs", key="btn_mortality_grid", type="primary", use_container_width=True):
+            if st.button("📊 View Graphs", key="btn_mortality_grid", type="primary", width=True):
                 st.session_state.page = "Mortality Rates"
                 st.rerun()
         
@@ -984,7 +1020,7 @@ try:
                 </ul>
             </div>
             """, unsafe_allow_html=True)
-            if st.button("📊 View Graphs", key="btn_trends_grid", type="primary", use_container_width=True):
+            if st.button("📊 View Graphs", key="btn_trends_grid", type="primary", width=True):
                 st.session_state.page = "Trend Analysis"
                 st.rerun()
         
@@ -1003,7 +1039,7 @@ try:
                 </ul>
             </div>
             """, unsafe_allow_html=True)
-            if st.button("📊 View Graphs", key="btn_rootcauses_grid", type="primary", use_container_width=True):
+            if st.button("📊 View Graphs", key="btn_rootcauses_grid", type="primary", width=True):
                 st.session_state.page = "Root-Cause Analysis"
                 st.rerun()
         
@@ -1042,7 +1078,7 @@ try:
                                      color='Category',
                                      title='Maternal Mortality Distribution',
                                      color_discrete_map={'Maternal Deaths': '#EF4444', 'Live Mothers': '#10B981'})
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig, width=True)
                     else:
                         st.bar_chart(mmr_data.set_index('Category')['Count'])
                 
@@ -1069,7 +1105,7 @@ try:
                         fig = px.pie(neonatal_data, values='Count', names='Status',
                                      title='Neonatal Birth Outcomes',
                                      color_discrete_map={'Stillbirths': '#EF4444', 'Live Births': '#10B981'})
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig, width=True)
                     else:
                         st.bar_chart(neonatal_data.set_index('Status')['Count'])
                 
@@ -1089,7 +1125,7 @@ try:
                                              title='Distribution of APGAR Scores',
                                              labels={'APGAR Score': 'APGAR Score'})
                             fig.update_layout(bargap=0.2)
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, width=True)
                 
                 st.success("✅ Maternal and neonatal mortality analysis complete")
             else:
@@ -1117,7 +1153,7 @@ try:
                                              labels={'Age': 'Age (years)'},
                                              color_discrete_sequence=['#3B82F6'])
                             fig.update_layout(bargap=0.2)
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, width=True)
                 
                 # Birth Weight Trends
                 st.markdown("### Birth Weight Distribution")
@@ -1139,7 +1175,7 @@ try:
                             fig.update_layout(bargap=0.2)
                             fig.add_vline(x=2500, line_dash="dash", line_color="red", 
                                          annotation_text="Low Birth Weight Threshold")
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, width=True)
                 
                 # Parity Distribution
                 st.markdown("### Parity Distribution")
@@ -1158,7 +1194,7 @@ try:
                                              labels={'Parity': 'Number of Previous Births'},
                                              color_discrete_sequence=['#8B5CF6'])
                             fig.update_layout(bargap=0.2)
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, width=True)
                 
                 # Gravidae Distribution
                 st.markdown("### Gravidae Distribution")
@@ -1177,7 +1213,7 @@ try:
                                              labels={'Gravidae': 'Number of Pregnancies'},
                                              color_discrete_sequence=['#F59E0B'])
                             fig.update_layout(bargap=0.2)
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, width=True)
                 
                 st.success("✅ Time-series trend analysis complete")
             else:
@@ -1204,7 +1240,7 @@ try:
                                      title='Top 10 Delivery Complications',
                                      labels={'x': 'Count', 'y': 'Complication'},
                                      color_discrete_sequence=['#EF4444'])
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig, width=True)
                     else:
                         st.bar_chart(complications)
                 
@@ -1233,7 +1269,7 @@ try:
                                          annotation_text="PPH Threshold")
                             fig.add_vline(x=1000, line_dash="dash", line_color="red", 
                                          annotation_text="Severe PPH")
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, width=True)
                 
                 # Risk Factor Analysis
                 st.markdown("### High-Risk Factors Distribution")
@@ -1260,7 +1296,7 @@ try:
                                      title='High-Risk Factors Distribution',
                                      color='Count',
                                      color_continuous_scale='Reds')
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig, width=True)
                     else:
                         st.bar_chart(risk_df.set_index('Risk Factor')['Count'])
                 
@@ -1445,7 +1481,7 @@ if st.session_state.page == 'Mortality Rates':
                              text='Count')
                 fig.update_traces(texttemplate='%{text:,}', textposition='outside')
                 fig.update_layout(showlegend=False, yaxis_title="Count")
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width=True)
             else:
                 mmr_data = pd.DataFrame({
                     'Category': ['Maternal Deaths', 'Live Mothers'],
@@ -1483,7 +1519,7 @@ if st.session_state.page == 'Mortality Rates':
                              color_discrete_map={'Stillbirths': '#EF4444', 'Live Births': '#10B981'},
                              hole=0.3)
                 fig.update_traces(textposition='inside', textinfo='percent+label')
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width=True)
             else:
                 neonatal_data = pd.DataFrame({
                     'Status': ['Stillbirths', 'Live Births'],
@@ -1517,7 +1553,7 @@ if st.session_state.page == 'Mortality Rates':
                     fig.update_layout(bargap=0.2)
                     fig.update_xaxes(title_text="APGAR Score")
                     fig.update_yaxes(title_text="Count")
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width=True)
                 else:
                     st.bar_chart(apgar_scores.value_counts().sort_index())
         
@@ -1528,11 +1564,187 @@ if st.session_state.page == 'Mortality Rates':
 # Trend Analysis page
 if st.session_state.page == 'Trend Analysis':
     st.header("📊 Time-Series Trend Analysis")
-    st.info("Longitudinal tracking of pregnancy patterns and health outcomes")
+    st.info("Longitudinal tracking of pregnancy patterns and health outcomes over time")
     
     df_real = st.session_state.current_df
     
     if df_real is not None and not df_real.empty:
+        # Find date columns for time series
+        date_columns = []
+        for col in df_real.columns:
+            if any(keyword in col.lower() for keyword in ['date', 'time', 'year', 'month']):
+                date_columns.append(col)
+        
+        st.subheader("Available Date Columns")
+        if date_columns:
+            st.write(f"Found date columns: {', '.join(date_columns)}")
+        else:
+            st.warning("No date columns found in the dataset")
+        
+        # Pregnancy Rate Over Time (using Date of Admission)
+        st.markdown("### Pregnancy Rate Over Time")
+        admission_date_col = None
+        for col in ['Date_of_Admission', 'Date of Admission', 'Admission Date', 'admission_date']:
+            if col in df_real.columns:
+                admission_date_col = col
+                break
+        
+        if admission_date_col:
+            # Convert to datetime
+            df_real['date_parsed'] = pd.to_datetime(df_real[admission_date_col], errors='coerce', dayfirst=True)
+            df_real['year'] = df_real['date_parsed'].dt.year
+            df_real['month'] = df_real['date_parsed'].dt.month
+            df_real['year_month'] = df_real['date_parsed'].dt.to_period('M')
+            
+            # Remove rows with invalid dates
+            df_dates = df_real.dropna(subset=['date_parsed'])
+            
+            if len(df_dates) > 0:
+                col_t1, col_t2, col_t3 = st.columns(3)
+                min_year = df_dates['date_parsed'].min().year
+                max_year = df_dates['date_parsed'].max().year
+                col_t1.metric("Date Range", f"{min_year} to {max_year}")
+                col_t2.metric("Total Records", f"{len(df_dates):,}")
+                col_t3.metric("Date Coverage", f"{(df_dates['date_parsed'].notna().sum() / len(df_real) * 100):.1f}%")
+                
+                # Filter to 5 years
+                years = sorted(df_dates['year'].unique())
+                if len(years) > 5:
+                    years = years[-5:]  # Last 5 years
+                df_dates_5y = df_dates[df_dates['year'].isin(years)]
+                
+                # Display the actual years
+                st.info(f"Showing data for years: {', '.join(map(str, years))}")
+                
+                # Yearly pregnancy rate (5 years)
+                st.markdown("#### Yearly Pregnancy Rate")
+                yearly_counts = df_dates_5y.groupby('year').size().reset_index(name='count')
+                
+                if MATPLOTLIB_AVAILABLE:
+                    fig, ax = plt.subplots(figsize=(12, 6))
+                    ax.plot(yearly_counts['year'], yearly_counts['count'], marker='o', color='red', linewidth=2, markersize=8)
+                    ax.set_title('Yearly Pregnancy Rate Trend')
+                    ax.set_xlabel('Year')
+                    ax.set_ylabel('Number of Pregnancies')
+                    ax.set_xticks(yearly_counts['year'])
+                    ax.grid(True, alpha=0.3)
+                    plt.tight_layout()
+                    st.pyplot(fig)
+                    plt.close()
+                
+                # Yearly breakdown with metrics (5 years)
+                st.markdown("#### Yearly Breakdown")
+                yearly_metrics = df_dates_5y.groupby('year').agg({
+                    'Age': ['mean', 'min', 'max'],
+                    'Birth Weight (in grams)': 'mean',
+                    'APGAR Score': 'mean'
+                }).round(2)
+                yearly_metrics.columns = ['Avg Age', 'Min Age', 'Max Age', 'Avg Birth Weight', 'Avg APGAR']
+                st.dataframe(yearly_metrics, width='stretch')
+                
+                # Yearly risk distribution (5 years)
+                if 'risk_score' in df_dates_5y.columns:
+                    st.markdown("#### Yearly Risk Distribution")
+                    yearly_risk = df_dates_5y.groupby('year')['risk_score'].mean().reset_index()
+                    
+                    if MATPLOTLIB_AVAILABLE:
+                        fig, ax = plt.subplots(figsize=(12, 6))
+                        yearly_risk.plot(kind='bar', x='year', y='risk_score', ax=ax, color='orange')
+                        ax.set_title('Average Risk Score by Year')
+                        ax.set_xlabel('Year')
+                        ax.set_ylabel('Average Risk Score')
+                        ax.grid(True, alpha=0.3)
+                        plt.tight_layout()
+                        st.pyplot(fig)
+                        plt.close()
+                
+                # Yearly comparison table
+                st.markdown("#### Yearly Comparison Summary")
+                col1, col2, col3, col4 = st.columns(4)
+                for idx, row in yearly_counts.iterrows():
+                    year = int(row['year'])
+                    count = row['count']
+                    if idx == 0:
+                        col1.metric(f"{year}", f"{count:,}", "Baseline")
+                    elif idx > 0:
+                        prev_count = yearly_counts.iloc[idx-1]['count']
+                        delta = count - prev_count
+                        delta_pct = (delta / prev_count * 100) if prev_count > 0 else 0
+                        if idx == 1:
+                            col2.metric(f"{year}", f"{count:,}", f"{delta:+,} ({delta_pct:+.1f}%)")
+                        elif idx == 2:
+                            col3.metric(f"{year}", f"{count:,}", f"{delta:+,} ({delta_pct:+.1f}%)")
+                        elif idx == 3:
+                            col4.metric(f"{year}", f"{count:,}", f"{delta:+,} ({delta_pct:+.1f}%)")
+                
+                # Cumulative pregnancy rate (5 years)
+                st.markdown("#### Cumulative Pregnancy Rate")
+                yearly_counts = df_dates_5y.groupby('year').size().reset_index(name='count')
+                yearly_counts['cumulative'] = yearly_counts['count'].cumsum()
+
+                if MATPLOTLIB_AVAILABLE:
+                    fig, ax = plt.subplots(figsize=(12, 6))
+                    ax.plot(yearly_counts['year'].astype(str), yearly_counts['cumulative'], 
+                           marker='o', color='purple', linewidth=2)
+                    ax.set_title('Cumulative Pregnancy Rate Over Time')
+                    ax.set_xlabel('Year')
+                    ax.set_ylabel('Cumulative Count')
+                    ax.grid(True, alpha=0.3)
+                    plt.tight_layout()
+                    st.pyplot(fig)
+                    plt.close()
+        else:
+            st.warning("No admission date column found for time series analysis")
+        
+        # Risk Trend Over Time (Yearly)
+        st.markdown("---")
+        st.markdown("### Risk Trends Over Time")
+        
+        if admission_date_col and 'risk_score' in df_real.columns:
+            # Calculate risk score if not exists
+            if 'risk_score' not in df_real.columns:
+                df_real['risk_score'] = 0
+                risk_factors = {
+                    'Age': (df_real['Age'] < 18) | (df_real['Age'] > 35),
+                    'Parity': (df_real['Parity'] > 4) | (df_real['Parity'] == 0),
+                    'HIV Status': df_real['HIV Status (P/N/KP/U)'] == 'P'
+                }
+                for factor, high_risk in risk_factors.items():
+                    if factor in df_real.columns:
+                        df_real.loc[high_risk, 'risk_score'] += 1
+            
+            df_dates = df_real.dropna(subset=['date_parsed'])
+            
+            if len(df_dates) > 0:
+                # Yearly risk trend
+                yearly_risk = df_dates.groupby('year')['risk_score'].mean().reset_index()
+                
+                if MATPLOTLIB_AVAILABLE:
+                    fig, ax = plt.subplots(figsize=(12, 6))
+                    yearly_risk.plot(kind='line', marker='o', x='year', y='risk_score', ax=ax, color='orange', linewidth=2)
+                    ax.set_title('Average Risk Score Over Time')
+                    ax.set_xlabel('Year')
+                    ax.set_ylabel('Average Risk Score')
+                    ax.grid(True, alpha=0.3)
+                    plt.tight_layout()
+                    st.pyplot(fig)
+                    plt.close()
+                
+                # High risk trend (yearly)
+                df_dates['is_high_risk'] = df_dates['risk_score'] >= 2
+                yearly_high_risk = df_dates.groupby('year')['is_high_risk'].mean().reset_index()
+                
+                if MATPLOTLIB_AVAILABLE:
+                    fig, ax = plt.subplots(figsize=(12, 6))
+                    yearly_high_risk.plot(kind='line', marker='s', x='year', y='is_high_risk', ax=ax, color='red', linewidth=2)
+                    ax.set_title('High-Risk Pregnancy Rate Over Time')
+                    ax.set_xlabel('Year')
+                    ax.set_ylabel('Proportion High-Risk')
+                    ax.grid(True, alpha=0.3)
+                    plt.tight_layout()
+                    st.pyplot(fig)
+                    plt.close()
+        
         # Age Distribution
         st.markdown("### Age Distribution Analysis")
         age_col = None
@@ -1559,7 +1771,7 @@ if st.session_state.page == 'Trend Analysis':
                     fig.update_layout(bargap=0.2)
                     fig.update_xaxes(title_text="Age (years)")
                     fig.update_yaxes(title_text="Count")
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width=True)
                 else:
                     st.bar_chart(age_data.value_counts().sort_index())
         
@@ -1593,7 +1805,7 @@ if st.session_state.page == 'Trend Analysis':
                                  annotation_text="High Birth Weight Threshold (4000g)")
                     fig.update_xaxes(title_text="Birth Weight (grams)")
                     fig.update_yaxes(title_text="Count")
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width=True)
                 else:
                     st.bar_chart(birth_weight.value_counts().sort_index())
         
@@ -1623,7 +1835,7 @@ if st.session_state.page == 'Trend Analysis':
                     fig.update_layout(bargap=0.2)
                     fig.update_xaxes(title_text="Number of Previous Births")
                     fig.update_yaxes(title_text="Count")
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width=True)
                 else:
                     st.bar_chart(parity_data.value_counts().sort_index())
         
@@ -1653,7 +1865,7 @@ if st.session_state.page == 'Trend Analysis':
                     fig.update_layout(bargap=0.2)
                     fig.update_xaxes(title_text="Number of Pregnancies")
                     fig.update_yaxes(title_text="Count")
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width=True)
                 else:
                     st.bar_chart(gravidae_data.value_counts().sort_index())
         
@@ -1694,7 +1906,7 @@ if st.session_state.page == 'Root-Cause Analysis':
                              text=complications.values)
                 fig.update_traces(texttemplate='%{text:,}', textposition='outside')
                 fig.update_layout(showlegend=False, xaxis_title="Count", yaxis_title="Complication")
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width=True)
             else:
                 st.bar_chart(complications)
         
@@ -1731,7 +1943,7 @@ if st.session_state.page == 'Root-Cause Analysis':
                                  annotation_text="Severe PPH (1000ml)")
                     fig.update_xaxes(title_text="Blood Loss (ml)")
                     fig.update_yaxes(title_text="Count")
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width=True)
                 else:
                     st.bar_chart(blood_loss.value_counts().sort_index())
         
@@ -1786,7 +1998,7 @@ if st.session_state.page == 'Root-Cause Analysis':
                              text='Count')
                 fig.update_traces(texttemplate='%{text:,}', textposition='outside')
                 fig.update_layout(showlegend=False, xaxis_title="Count", yaxis_title="Risk Factor")
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width=True)
             else:
                 st.bar_chart(risk_df.set_index('Risk Factor')['Count'])
         
@@ -2105,7 +2317,7 @@ if st.session_state.page == 'BERT-LLM-KG Pipeline':
         )
         col_close, col_zoom = st.columns([1, 2])
         with col_close:
-            if st.button("✖️ Close / Minimize", key="close_enlarged_focus_btn", type="primary", use_container_width=True):
+            if st.button("✖️ Close / Minimize", key="close_enlarged_focus_btn", type="primary", width=True):
                 st.session_state.enlarged_chart_key = None
                 st.rerun()
         with col_zoom:
@@ -2143,7 +2355,7 @@ if st.session_state.page == 'BERT-LLM-KG Pipeline':
                     is_active = (st.session_state.enlarged_chart_key == key)
                     btn_label = "✖️ Minimize" if is_active else "🔍 Enlarge Chart"
                     btn_type = "primary" if is_active else "secondary"
-                    if st.button(btn_label, key=f"btn_enlarge_{key}", type=btn_type, use_container_width=True):
+                    if st.button(btn_label, key=f"btn_enlarge_{key}", type=btn_type, width=True):
                         st.session_state.enlarged_chart_key = None if is_active else key
                         st.rerun()
                     
@@ -2350,22 +2562,26 @@ elif st.session_state.page == 'Re-Identification Risk':
         # Load data
         st.subheader("Data Loading")
         
-        # Check for anonymized data
+        # Check for anonymized data - load all sheets
         anonymized_file = find_data_file("anonymized_data_kg_export.xlsx")
         original_file = find_data_file("COMBINE_MOH_333_3replaced_KCHR.xlsx")
         
-        col1, col2 = st.columns(2)
-        with col1:
-            if anonymized_file and anonymized_file.exists():
-                st.success(f"✅ Anonymized data found: {anonymized_file.name}")
-            else:
-                st.warning("⚠️ Anonymized data not found")
+        anonymized_sheets = {}
+        original_sheets = {}
         
-        with col2:
-            if original_file and original_file.exists():
-                st.success(f"✅ Original data found: {original_file.name}")
-            else:
-                st.warning("⚠️ Original data not found")
+        if anonymized_file and anonymized_file.exists():
+            try:
+                anonymized_sheets = load_excel_all_sheets(anonymized_file)
+                st.success(f"✅ Anonymized data found: {anonymized_file.name} ({len(anonymized_sheets)} sheets)")
+            except Exception as e:
+                st.warning(f"⚠️ Could not load anonymized data: {e}")
+        
+        if original_file and original_file.exists():
+            try:
+                original_sheets = load_excel_all_sheets(original_file)
+                st.success(f"✅ Original data found: {original_file.name} ({len(original_sheets)} sheets)")
+            except Exception as e:
+                st.warning(f"⚠️ Could not load original data: {e}")
         
         st.markdown("---")
         
@@ -2373,17 +2589,19 @@ elif st.session_state.page == 'Re-Identification Risk':
         if st.button("🚀 Run Risk Assessment", type="primary"):
             with st.spinner("Running comprehensive risk assessment..."):
                 try:
-                    # Load data
-                    if original_file and original_file.exists():
-                        original_df = pd.read_excel(original_file)
-                        st.info(f"Loaded {len(original_df)} original records")
+                    # Combine all sheets for assessment
+                    original_df = None
+                    anonymized_df = None
+                    
+                    if original_sheets:
+                        original_df = pd.concat(original_sheets.values(), ignore_index=True)
+                        st.info(f"Loaded {len(original_df)} original records from {len(original_sheets)} sheets")
                     else:
-                        original_df = None
                         st.warning("Original data not available for comparison")
                     
-                    if anonymized_file and anonymized_file.exists():
-                        anonymized_df = pd.read_excel(anonymized_file)
-                        st.info(f"Loaded {len(anonymized_df)} anonymized records")
+                    if anonymized_sheets:
+                        anonymized_df = pd.concat(anonymized_sheets.values(), ignore_index=True)
+                        st.info(f"Loaded {len(anonymized_df)} anonymized records from {len(anonymized_sheets)} sheets")
                     else:
                         st.warning("Anonymized data not available")
                         anonymized_df = None
@@ -2546,7 +2764,7 @@ elif st.session_state.page == 'High-Risk Register':
     if st.session_state.current_df is not None:
         df = st.session_state.current_df.copy()
         
-        # Define risk factors and recommendations
+        # Define risk factors and recommendations (enhanced with specific factors)
         risk_factors = {
             'Age': {
                 'high_risk': (df['Age'] < 18) | (df['Age'] > 35),
@@ -2555,6 +2773,30 @@ elif st.session_state.page == 'High-Risk Register':
             'Parity': {
                 'high_risk': (df['Parity'] > 4) | (df['Parity'] == 0) | (df['Gravidae'] > 5),
                 'recommendation': 'Monitor for postpartum hemorrhage, plan skilled birth attendance'
+            },
+            'High Blood Pressure': {
+                'high_risk': False,  # Will check for BP columns
+                'recommendation': 'Monitor for preeclampsia, prescribe low-dose aspirin, frequent BP checks'
+            },
+            'HIV Positive': {
+                'high_risk': df['HIV Status (P/N/KP/U)'] == 'P',
+                'recommendation': 'PMTCT protocol, ARV prophylaxis, exclusive breastfeeding counseling'
+            },
+            'Diabetic': {
+                'high_risk': False,  # Will check for diabetes columns
+                'recommendation': 'Glucose monitoring, dietary counseling, insulin if needed'
+            },
+            'Low Hemoglobin': {
+                'high_risk': False,  # Will check for hemoglobin columns
+                'recommendation': 'Iron supplementation, hemoglobin monitoring, blood preparation'
+            },
+            'Failed ANC Attendance': {
+                'high_risk': False,  # Will check for ANC visit count
+                'recommendation': 'Intensive follow-up, community health worker engagement, mobile reminders'
+            },
+            'HIV+ Failed ARVs': {
+                'high_risk': False,  # Will check for ARV adherence
+                'recommendation': 'ARV adherence counseling, directly observed therapy, social support'
             },
             'Delivery Complications': {
                 'high_risk': df['Delivery Complications (codes)'].notna() & (df['Delivery Complications (codes)'] != ''),
@@ -2572,12 +2814,44 @@ elif st.session_state.page == 'High-Risk Register':
                 'high_risk': (pd.to_numeric(df['Birth Weight (in grams)'], errors='coerce') < 2500) | 
                             (pd.to_numeric(df['Birth Weight (in grams)'], errors='coerce') > 4000),
                 'recommendation': 'Low birth weight: NICU care, kangaroo mother care. High birth weight: monitor for delivery complications'
-            },
-            'HIV Status': {
-                'high_risk': df['HIV Status (P/N/KP/U)'] == 'P',
-                'recommendation': 'PMTCT protocol, ARV prophylaxis, exclusive breastfeeding counseling'
             }
         }
+        
+        # Check for additional risk factor columns
+        # High Blood Pressure
+        bp_cols = [col for col in df.columns if 'bp' in col.lower() or 'blood pressure' in col.lower()]
+        if bp_cols:
+            for bp_col in bp_cols:
+                if df[bp_col].dtype in ['int64', 'float64']:
+                    risk_factors['High Blood Pressure']['high_risk'] |= df[bp_col] > 140
+        
+        # Diabetes
+        diabetes_cols = [col for col in df.columns if 'diabetes' in col.lower() or 'glucose' in col.lower() or 'sugar' in col.lower()]
+        if diabetes_cols:
+            for diab_col in diabetes_cols:
+                if df[diab_col].dtype == 'object':
+                    risk_factors['Diabetic']['high_risk'] |= df[diab_col].astype(str).str.contains('yes', case=False, na=False)
+        
+        # Low Hemoglobin
+        hemo_cols = [col for col in df.columns if 'hemoglobin' in col.lower() or 'hemo' in col.lower() or 'hb' in col.lower()]
+        if hemo_cols:
+            for hemo_col in hemo_cols:
+                if df[hemo_col].dtype in ['int64', 'float64']:
+                    risk_factors['Low Hemoglobin']['high_risk'] |= df[hemo_col] < 11
+        
+        # ANC Attendance
+        anc_cols = [col for col in df.columns if 'anc' in col.lower() and 'visit' in col.lower()]
+        if anc_cols:
+            for anc_col in anc_cols:
+                if df[anc_col].dtype in ['int64', 'float64']:
+                    risk_factors['Failed ANC Attendance']['high_risk'] |= df[anc_col] < 4
+        
+        # ARV Adherence
+        arv_cols = [col for col in df.columns if 'arv' in col.lower() or 'regimen' in col.lower()]
+        if arv_cols:
+            for arv_col in arv_cols:
+                if df[arv_col].dtype == 'object':
+                    risk_factors['HIV+ Failed ARVs']['high_risk'] |= df[arv_col].astype(str).str.contains('no', case=False, na=False)
         
         # Calculate overall risk score
         df['risk_score'] = 0
@@ -2594,16 +2868,193 @@ elif st.session_state.page == 'High-Risk Register':
         df['risk_level'] = pd.cut(df['risk_score'], bins=[-1, 0, 1, 2, 10], 
                                    labels=['Low Risk', 'Moderate Risk', 'High Risk', 'Very High Risk'])
         
-        # Display risk distribution
+        # Display risk distribution with better graphs
         st.subheader("Risk Level Distribution")
         risk_counts = df['risk_level'].value_counts()
         
-        if PLOTLY_AVAILABLE:
-            fig = px.pie(values=risk_counts.values, names=risk_counts.index, 
-                         title="Pregnancy Risk Distribution")
-            st.plotly_chart(fig, width='stretch')
+        col1, col2 = st.columns(2)
+        with col1:
+            if PLOTLY_AVAILABLE:
+                fig = px.pie(values=risk_counts.values, names=risk_counts.index, 
+                             title="Pregnancy Risk Distribution")
+                st.plotly_chart(fig, width='stretch')
+            else:
+                st.bar_chart(risk_counts)
+        
+        with col2:
+            if MATPLOTLIB_AVAILABLE:
+                fig, ax = plt.subplots(figsize=(8, 6))
+                risk_counts.plot(kind='bar', ax=ax, color=['#e74c3c', '#f39c12', '#3498db', '#9b59b6'])
+                ax.set_title('Risk Level Distribution')
+                ax.set_xlabel('Risk Level')
+                ax.set_ylabel('Count')
+                ax.tick_params(axis='x', rotation=45)
+                plt.tight_layout()
+                st.pyplot(fig)
+                plt.close()
+        
+        # Risk Factor Distribution
+        st.subheader("Risk Factor Distribution")
+        factor_counts = {}
+        for factor in risk_factors.keys():
+            if factor in df.columns:
+                factor_counts[factor] = df[factor].sum()
+        
+        if MATPLOTLIB_AVAILABLE:
+            fig, ax = plt.subplots(figsize=(10, 6))
+            plt.bar(factor_counts.keys(), factor_counts.values(), color='steelblue')
+            ax.set_title('Risk Factor Distribution')
+            ax.set_xlabel('Risk Factor')
+            ax.set_ylabel('Count')
+            ax.tick_params(axis='x', rotation=45)
+            plt.tight_layout()
+            st.pyplot(fig)
+            plt.close()
+        
+        # Age Distribution
+        st.subheader("Age Distribution by Risk Level")
+        if 'Age' in df.columns:
+            if MATPLOTLIB_AVAILABLE:
+                fig, ax = plt.subplots(figsize=(10, 6))
+                for risk_level in ['High Risk', 'Very High Risk']:
+                    if risk_level in df['risk_level'].values:
+                        df[df['risk_level'] == risk_level]['Age'].hist(
+                            alpha=0.5, label=risk_level, bins=20, ax=ax
+                        )
+                ax.set_title('Age Distribution by Risk Level')
+                ax.set_xlabel('Age')
+                ax.set_ylabel('Count')
+                ax.legend()
+                plt.tight_layout()
+                st.pyplot(fig)
+                plt.close()
+        
+        # Risk Score Distribution
+        st.subheader("Risk Score Distribution")
+        if MATPLOTLIB_AVAILABLE:
+            fig, ax = plt.subplots(figsize=(10, 6))
+            df['risk_score'].hist(bins=range(0, df['risk_score'].max() + 2), ax=ax, color='skyblue', edgecolor='black')
+            ax.set_title('Risk Score Distribution')
+            ax.set_xlabel('Risk Score')
+            ax.set_ylabel('Count')
+            ax.grid(True, alpha=0.3)
+            plt.tight_layout()
+            st.pyplot(fig)
+            plt.close()
+        
+        # Comparison with Low Risk
+        st.markdown("---")
+        st.subheader("🔍 High-Risk vs Low-Risk Comparison")
+        
+        low_risk_df = df[df['risk_score'] == 0].copy()
+        
+        if len(low_risk_df) > 0 and len(high_risk_df) > 0:
+            st.info(f"Comparing {len(high_risk_df)} high-risk vs {len(low_risk_df)} low-risk pregnancies")
+            
+            # Age comparison
+            if 'Age' in df.columns and MATPLOTLIB_AVAILABLE:
+                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+                
+                high_risk_df['Age'].hist(bins=20, ax=ax1, color='red', alpha=0.7, label='High Risk', edgecolor='black')
+                low_risk_df['Age'].hist(bins=20, ax=ax2, color='green', alpha=0.7, label='Low Risk', edgecolor='black')
+                
+                ax1.set_title('Age Distribution - High Risk')
+                ax1.set_xlabel('Age')
+                ax1.set_ylabel('Count')
+                ax1.legend()
+                ax1.grid(True, alpha=0.3)
+                
+                ax2.set_title('Age Distribution - Low Risk')
+                ax2.set_xlabel('Age')
+                ax2.set_ylabel('Count')
+                ax2.legend()
+                ax2.grid(True, alpha=0.3)
+                
+                plt.tight_layout()
+                st.pyplot(fig)
+                plt.close()
+            
+            # Birth weight comparison
+            birth_weight_col = None
+            for col in ['Birth Weight (in grams)', 'Birth Weight', 'BirthWeight']:
+                if col in df.columns:
+                    birth_weight_col = col
+                    break
+            
+            if birth_weight_col and MATPLOTLIB_AVAILABLE:
+                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+                
+                high_bw = pd.to_numeric(high_risk_df[birth_weight_col], errors='coerce').dropna()
+                low_bw = pd.to_numeric(low_risk_df[birth_weight_col], errors='coerce').dropna()
+                
+                if len(high_bw) > 0:
+                    high_bw.hist(bins=30, ax=ax1, color='red', alpha=0.7, label='High Risk', edgecolor='black')
+                    ax1.set_title(f'Birth Weight - High Risk (Mean: {high_bw.mean():.0f}g)')
+                    ax1.set_xlabel('Birth Weight (grams)')
+                    ax1.set_ylabel('Count')
+                    ax1.legend()
+                    ax1.grid(True, alpha=0.3)
+                
+                if len(low_bw) > 0:
+                    low_bw.hist(bins=30, ax=ax2, color='green', alpha=0.7, label='Low Risk', edgecolor='black')
+                    ax2.set_title(f'Birth Weight - Low Risk (Mean: {low_bw.mean():.0f}g)')
+                    ax2.set_xlabel('Birth Weight (grams)')
+                    ax2.set_ylabel('Count')
+                    ax2.legend()
+                    ax2.grid(True, alpha=0.3)
+                
+                plt.tight_layout()
+                st.pyplot(fig)
+                plt.close()
+            
+            # APGAR score comparison
+            if 'APGAR Score' in df.columns and MATPLOTLIB_AVAILABLE:
+                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+                
+                high_apgar = pd.to_numeric(high_risk_df['APGAR Score'], errors='coerce').dropna()
+                low_apgar = pd.to_numeric(low_risk_df['APGAR Score'], errors='coerce').dropna()
+                
+                if len(high_apgar) > 0:
+                    high_apgar.hist(bins=10, ax=ax1, color='red', alpha=0.7, label='High Risk', edgecolor='black')
+                    ax1.set_title(f'APGAR Score - High Risk (Mean: {high_apgar.mean():.1f})')
+                    ax1.set_xlabel('APGAR Score')
+                    ax1.set_ylabel('Count')
+                    ax1.legend()
+                    ax1.grid(True, alpha=0.3)
+                
+                if len(low_apgar) > 0:
+                    low_apgar.hist(bins=10, ax=ax2, color='green', alpha=0.7, label='Low Risk', edgecolor='black')
+                    ax2.set_title(f'APGAR Score - Low Risk (Mean: {low_apgar.mean():.1f})')
+                    ax2.set_xlabel('APGAR Score')
+                    ax2.set_ylabel('Count')
+                    ax2.legend()
+                    ax2.grid(True, alpha=0.3)
+                
+                plt.tight_layout()
+                st.pyplot(fig)
+                plt.close()
+            
+            # Summary comparison metrics
+            st.subheader("Summary Comparison Metrics")
+            col1, col2, col3, col4 = st.columns(4)
+            
+            if 'Age' in df.columns:
+                col1.metric("Avg Age (High)", f"{high_risk_df['Age'].mean():.1f}", delta=f"{high_risk_df['Age'].mean() - low_risk_df['Age'].mean():.1f}")
+                col2.metric("Avg Age (Low)", f"{low_risk_df['Age'].mean():.1f}")
+            
+            if birth_weight_col:
+                high_bw = pd.to_numeric(high_risk_df[birth_weight_col], errors='coerce').mean()
+                low_bw = pd.to_numeric(low_risk_df[birth_weight_col], errors='coerce').mean()
+                col3.metric("Avg Weight (High)", f"{high_bw:.0f}g", delta=f"{high_bw - low_bw:.0f}g")
+                col4.metric("Avg Weight (Low)", f"{low_bw:.0f}g")
+            
+            if 'APGAR Score' in df.columns:
+                high_apgar = pd.to_numeric(high_risk_df['APGAR Score'], errors='coerce').mean()
+                low_apgar = pd.to_numeric(low_risk_df['APGAR Score'], errors='coerce').mean()
+                col1.metric("Avg APGAR (High)", f"{high_apgar:.1f}", delta=f"{high_apgar - low_apgar:.1f}")
+                col2.metric("Avg APGAR (Low)", f"{low_apgar:.1f}")
         else:
-            st.bar_chart(risk_counts)
+            st.warning("Not enough data for comparison")
         
         # Show high-risk mothers with recommendations
         st.subheader("High-Risk Mothers & Clinical Recommendations")
@@ -2718,6 +3169,42 @@ elif st.session_state.page == 'Moderate Risk':
         
         # Filter moderate risk (1 risk factor)
         moderate_risk_df = df[df['risk_score'] == 1].copy()
+        
+        # Display moderate risk distribution graphs
+        st.subheader("Moderate Risk Distribution")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if MATPLOTLIB_AVAILABLE:
+                fig, ax = plt.subplots(figsize=(8, 6))
+                risk_counts = df['risk_score'].value_counts()
+                colors = ['#3498db', '#f39c12', '#e74c3c', '#9b59b6']
+                risk_counts.plot(kind='bar', ax=ax, color=colors[:len(risk_counts)])
+                ax.set_title('Risk Score Distribution')
+                ax.set_xlabel('Risk Score')
+                ax.set_ylabel('Count')
+                ax.set_xticklabels(['Low (0)', 'Moderate (1)', 'High (2)', 'Very High (3+)'])
+                plt.tight_layout()
+                st.pyplot(fig)
+                plt.close()
+        
+        with col2:
+            # Moderate risk factor breakdown
+            moderate_factors = {}
+            for factor in risk_factors.keys():
+                if factor in df.columns:
+                    moderate_factors[factor] = ((df[factor] == True) & (df['risk_score'] == 1)).sum()
+            
+            if MATPLOTLIB_AVAILABLE:
+                fig, ax = plt.subplots(figsize=(8, 6))
+                plt.bar(moderate_factors.keys(), moderate_factors.values(), color='orange')
+                ax.set_title('Moderate Risk Factors')
+                ax.set_xlabel('Risk Factor')
+                ax.set_ylabel('Count')
+                ax.tick_params(axis='x', rotation=45)
+                plt.tight_layout()
+                st.pyplot(fig)
+                plt.close()
         
         if len(moderate_risk_df) > 0:
             st.info(f"Found {len(moderate_risk_df)} moderate-risk pregnancies requiring enhanced monitoring")
@@ -2899,13 +3386,45 @@ elif st.session_state.page == 'Moderate Risk':
                 """)
                 
                 st.markdown("#### 💊 Enhanced Supplements Schedule")
-                supplement_data = {
-                    "Supplement": ["Folic Acid", "Iron + Folic Acid", "Calcium", "Vitamin D", "Omega-3", "Low-dose Aspirin"],
-                    "Dosage": ["400-800mcg daily", "60-120mg daily", "1000-1500mg daily", "1000-2000 IU daily", "200-300mg DHA daily", "75-81mg daily"],
-                    "Duration": ["Pre-conception to 12 weeks", "Throughout pregnancy", "Throughout pregnancy", "Throughout pregnancy", "Throughout pregnancy", "From 12 weeks if indicated"],
-                    "Purpose": ["Neural tube defect prevention", "Anemia prevention/treatment", "Blood pressure control", "Bone health", "Fetal brain development", "Preeclampsia prevention"]
-                }
-                st.dataframe(pd.DataFrame(supplement_data), use_container_width=True, hide_index=True)
+                
+                # Display in 2 columns of 3 supplements each
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.info("**Folic Acid**")
+                    st.write("Dosage: 400-800mcg daily")
+                    st.write("Duration: Pre-conception to 12 weeks")
+                    st.write("Purpose: Neural tube defect prevention")
+                    st.markdown("---")
+                    
+                    st.info("**Iron + Folic Acid**")
+                    st.write("Dosage: 60-120mg daily")
+                    st.write("Duration: Throughout pregnancy")
+                    st.write("Purpose: Anemia prevention/treatment")
+                    st.markdown("---")
+                    
+                    st.info("**Calcium**")
+                    st.write("Dosage: 1000-1500mg daily")
+                    st.write("Duration: Throughout pregnancy")
+                    st.write("Purpose: Blood pressure control")
+                
+                with col2:
+                    st.info("**Vitamin D**")
+                    st.write("Dosage: 1000-2000 IU daily")
+                    st.write("Duration: Throughout pregnancy")
+                    st.write("Purpose: Bone health")
+                    st.markdown("---")
+                    
+                    st.info("**Omega-3**")
+                    st.write("Dosage: 200-300mg DHA daily")
+                    st.write("Duration: Throughout pregnancy")
+                    st.write("Purpose: Fetal brain development")
+                    st.markdown("---")
+                    
+                    st.info("**Low-dose Aspirin**")
+                    st.write("Dosage: 75-81mg daily")
+                    st.write("Duration: From 12 weeks if indicated")
+                    st.write("Purpose: Preeclampsia prevention")
             
             with tab2:
                 st.markdown("#### 🩺 Intensive Monitoring Parameters")
@@ -2946,7 +3465,7 @@ elif st.session_state.page == 'Moderate Risk':
                     "Ultrasound": ["", "", "✓", "", "✓", "", "", "", "✓", "", ""],
                     "Specialist Review": ["", "✓", "✓", "✓", "✓", "✓", "✓", "✓", "✓", "✓", "✓"]
                 }
-                st.dataframe(pd.DataFrame(schedule_data), use_container_width=True, hide_index=True)
+                st.dataframe(pd.DataFrame(schedule_data), width='stretch', hide_index=True)
             
             with tab3:
                 st.markdown("#### ⚠️ Risk-Specific Interventions")
@@ -3044,7 +3563,7 @@ elif st.session_state.page == 'Moderate Risk':
                     "Timing": ["At birth", "At birth", "6 weeks", "10 weeks", "14 weeks", "6 weeks", "10 weeks", "14 weeks", "6 weeks", "10 weeks", "14 weeks", "6 weeks", "10 weeks", "At birth", "9 months"],
                     "Purpose": ["Tuberculosis", "Polio", "Polio", "Polio", "Polio", "Diphtheria, Pertussis, Tetanus, Hep B, Hib", "Diphtheria, Pertussis, Tetanus, Hep B, Hib", "Diphtheria, Pertussis, Tetanus, Hep B, Hib", "Pneumococcal", "Pneumococcal", "Pneumococcal", "Rotavirus", "Rotavirus", "Hepatitis B", "Measles"]
                 }
-                st.dataframe(pd.DataFrame(immunization_data), use_container_width=True, hide_index=True)
+                st.dataframe(pd.DataFrame(immunization_data), width='stretch', hide_index=True)
             
             st.markdown("---")
             st.warning("💡 **Professional Note:** This enhanced care plan follows WHO guidelines for moderate-risk pregnancies. Regular specialist consultation and close monitoring are essential. Always consult with your healthcare provider for personalized medical advice.")
@@ -3086,8 +3605,153 @@ elif st.session_state.page == 'Low Risk':
         # Filter low risk (0 risk factors)
         low_risk_df = df[df['risk_score'] == 0].copy()
         
+        # Display low risk distribution graphs
+        st.subheader("Low Risk Distribution")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if MATPLOTLIB_AVAILABLE:
+                fig, ax = plt.subplots(figsize=(8, 6))
+                risk_counts = df['risk_score'].value_counts()
+                colors = ['#2ecc71', '#3498db', '#f39c12', '#e74c3c']
+                risk_counts.plot(kind='bar', ax=ax, color=colors[:len(risk_counts)])
+                ax.set_title('Risk Score Distribution')
+                ax.set_xlabel('Risk Score')
+                ax.set_ylabel('Count')
+                ax.set_xticklabels(['Low (0)', 'Moderate (1)', 'High (2)', 'Very High (3+)'])
+                plt.tight_layout()
+                st.pyplot(fig)
+                plt.close()
+        
+        with col2:
+            # Age distribution for low risk
+            if 'Age' in df.columns and MATPLOTLIB_AVAILABLE:
+                fig, ax = plt.subplots(figsize=(8, 6))
+                low_risk_df['Age'].hist(bins=20, ax=ax, color='green', edgecolor='black')
+                ax.set_title('Age Distribution (Low Risk)')
+                ax.set_xlabel('Age')
+                ax.set_ylabel('Count')
+                ax.grid(True, alpha=0.3)
+                plt.tight_layout()
+                st.pyplot(fig)
+                plt.close()
+        
         if len(low_risk_df) > 0:
             st.success(f"Found {len(low_risk_df)} low-risk pregnancies requiring routine care")
+            
+            # Comparison with High Risk
+            st.markdown("---")
+            st.subheader("🔍 Low-Risk vs High-Risk Comparison")
+            
+            high_risk_df = df[df['risk_score'] >= 2].copy()
+            
+            if len(high_risk_df) > 0:
+                st.info(f"Comparing {len(low_risk_df)} low-risk vs {len(high_risk_df)} high-risk pregnancies")
+                
+                # Age comparison
+                if 'Age' in df.columns and MATPLOTLIB_AVAILABLE:
+                    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+                    
+                    low_risk_df['Age'].hist(bins=20, ax=ax1, color='green', alpha=0.7, label='Low Risk', edgecolor='black')
+                    high_risk_df['Age'].hist(bins=20, ax=ax2, color='red', alpha=0.7, label='High Risk', edgecolor='black')
+                    
+                    ax1.set_title('Age Distribution - Low Risk')
+                    ax1.set_xlabel('Age')
+                    ax1.set_ylabel('Count')
+                    ax1.legend()
+                    ax1.grid(True, alpha=0.3)
+                    
+                    ax2.set_title('Age Distribution - High Risk')
+                    ax2.set_xlabel('Age')
+                    ax2.set_ylabel('Count')
+                    ax2.legend()
+                    ax2.grid(True, alpha=0.3)
+                    
+                    plt.tight_layout()
+                    st.pyplot(fig)
+                    plt.close()
+                
+                # Birth weight comparison
+                birth_weight_col = None
+                for col in ['Birth Weight (in grams)', 'Birth Weight', 'BirthWeight']:
+                    if col in df.columns:
+                        birth_weight_col = col
+                        break
+                
+                if birth_weight_col and MATPLOTLIB_AVAILABLE:
+                    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+                    
+                    low_bw = pd.to_numeric(low_risk_df[birth_weight_col], errors='coerce').dropna()
+                    high_bw = pd.to_numeric(high_risk_df[birth_weight_col], errors='coerce').dropna()
+                    
+                    if len(low_bw) > 0:
+                        low_bw.hist(bins=30, ax=ax1, color='green', alpha=0.7, label='Low Risk', edgecolor='black')
+                        ax1.set_title(f'Birth Weight - Low Risk (Mean: {low_bw.mean():.0f}g)')
+                        ax1.set_xlabel('Birth Weight (grams)')
+                        ax1.set_ylabel('Count')
+                        ax1.legend()
+                        ax1.grid(True, alpha=0.3)
+                    
+                    if len(high_bw) > 0:
+                        high_bw.hist(bins=30, ax=ax2, color='red', alpha=0.7, label='High Risk', edgecolor='black')
+                        ax2.set_title(f'Birth Weight - High Risk (Mean: {high_bw.mean():.0f}g)')
+                        ax2.set_xlabel('Birth Weight (grams)')
+                        ax2.set_ylabel('Count')
+                        ax2.legend()
+                        ax2.grid(True, alpha=0.3)
+                    
+                    plt.tight_layout()
+                    st.pyplot(fig)
+                    plt.close()
+                
+                # APGAR score comparison
+                if 'APGAR Score' in df.columns and MATPLOTLIB_AVAILABLE:
+                    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+                    
+                    low_apgar = pd.to_numeric(low_risk_df['APGAR Score'], errors='coerce').dropna()
+                    high_apgar = pd.to_numeric(high_risk_df['APGAR Score'], errors='coerce').dropna()
+                    
+                    if len(low_apgar) > 0:
+                        low_apgar.hist(bins=10, ax=ax1, color='green', alpha=0.7, label='Low Risk', edgecolor='black')
+                        ax1.set_title(f'APGAR Score - Low Risk (Mean: {low_apgar.mean():.1f})')
+                        ax1.set_xlabel('APGAR Score')
+                        ax1.set_ylabel('Count')
+                        ax1.legend()
+                        ax1.grid(True, alpha=0.3)
+                    
+                    if len(high_apgar) > 0:
+                        high_apgar.hist(bins=10, ax=ax2, color='red', alpha=0.7, label='High Risk', edgecolor='black')
+                        ax2.set_title(f'APGAR Score - High Risk (Mean: {high_apgar.mean():.1f})')
+                        ax2.set_xlabel('APGAR Score')
+                        ax2.set_ylabel('Count')
+                        ax2.legend()
+                        ax2.grid(True, alpha=0.3)
+                    
+                    plt.tight_layout()
+                    st.pyplot(fig)
+                    plt.close()
+                
+                # Summary comparison metrics
+                st.subheader("Summary Comparison Metrics")
+                col1, col2, col3, col4 = st.columns(4)
+                
+                if 'Age' in df.columns:
+                    col1.metric("Avg Age (Low)", f"{low_risk_df['Age'].mean():.1f}")
+                    col2.metric("Avg Age (High)", f"{high_risk_df['Age'].mean():.1f}", delta=f"{high_risk_df['Age'].mean() - low_risk_df['Age'].mean():.1f}")
+                
+                if birth_weight_col:
+                    low_bw = pd.to_numeric(low_risk_df[birth_weight_col], errors='coerce').mean()
+                    high_bw = pd.to_numeric(high_risk_df[birth_weight_col], errors='coerce').mean()
+                    col3.metric("Avg Weight (Low)", f"{low_bw:.0f}g")
+                    col4.metric("Avg Weight (High)", f"{high_bw:.0f}g", delta=f"{high_bw - low_bw:.0f}g")
+                
+                if 'APGAR Score' in df.columns:
+                    low_apgar = pd.to_numeric(low_risk_df['APGAR Score'], errors='coerce').mean()
+                    high_apgar = pd.to_numeric(high_risk_df['APGAR Score'], errors='coerce').mean()
+                    col1.metric("Avg APGAR (Low)", f"{low_apgar:.1f}")
+                    col2.metric("Avg APGAR (High)", f"{high_apgar:.1f}", delta=f"{high_apgar - low_apgar:.1f}")
+            else:
+                st.warning("No high-risk pregnancies found for comparison")
             
             st.subheader("Low Risk Cases")
             display_cols = ['Age', 'Parity', 'Gravidae', 'Delivery Complications (codes)',
@@ -3095,7 +3759,7 @@ elif st.session_state.page == 'Low Risk':
                            'HIV Status (P/N/KP/U)', 'risk_score', 'risk_factors']
             available_cols = [col for col in display_cols if col in low_risk_df.columns]
             df_clean = clean_dataframe_for_arrow(low_risk_df[available_cols].head(50))
-            st.dataframe(df_clean, width='stretch')
+            st.table(df_clean)
             
             st.markdown("---")
             st.subheader("📋 Low Risk Pregnancy Comprehensive Care Plan")
@@ -3245,13 +3909,39 @@ elif st.session_state.page == 'Low Risk':
                 """)
                 
                 st.markdown("#### 💊 Recommended Supplements")
-                supplement_data = {
-                    "Supplement": ["Folic Acid", "Iron + Folic Acid", "Calcium", "Vitamin D", "Iodine"],
-                    "Dosage": ["400mcg daily", "1 tablet daily", "500mg daily", "600 IU daily", "150mcg daily"],
-                    "Duration": ["Pre-conception to 12 weeks", "Throughout pregnancy", "Throughout pregnancy", "Throughout pregnancy", "Throughout pregnancy"],
-                    "Purpose": ["Neural tube defect prevention", "Anemia prevention", "Bone health", "Bone health", "Thyroid function"]
-                }
-                st.dataframe(pd.DataFrame(supplement_data), use_container_width=True, hide_index=True)
+                
+                # Display in columns for full visibility
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.info("**Folic Acid**")
+                    st.write("Dosage: 400mcg daily")
+                    st.write("Duration: Pre-conception to 12 weeks")
+                    st.write("Purpose: Neural tube defect prevention")
+                    st.markdown("---")
+                    
+                    st.info("**Iron + Folic Acid**")
+                    st.write("Dosage: 1 tablet daily")
+                    st.write("Duration: Throughout pregnancy")
+                    st.write("Purpose: Anemia prevention")
+                    st.markdown("---")
+                    
+                    st.info("**Calcium**")
+                    st.write("Dosage: 500mg daily")
+                    st.write("Duration: Throughout pregnancy")
+                    st.write("Purpose: Bone health")
+                
+                with col2:
+                    st.info("**Vitamin D**")
+                    st.write("Dosage: 600 IU daily")
+                    st.write("Duration: Throughout pregnancy")
+                    st.write("Purpose: Bone health")
+                    st.markdown("---")
+                    
+                    st.info("**Iodine**")
+                    st.write("Dosage: 150mcg daily")
+                    st.write("Duration: Throughout pregnancy")
+                    st.write("Purpose: Thyroid function")
             
             with tab2:
                 st.markdown("#### 🩺 Monitoring Parameters")
@@ -3288,7 +3978,7 @@ elif st.session_state.page == 'Low Risk':
                     "Fetal Heart Rate": ["", "✓", "✓", "✓", "✓", "✓", "✓", "✓"],
                     "Fetal Movements": ["", "", "", "", "", "✓", "✓", "✓"]
                 }
-                st.dataframe(pd.DataFrame(schedule_data), use_container_width=True, hide_index=True)
+                st.dataframe(pd.DataFrame(schedule_data), width='stretch', hide_index=True)
             
             with tab3:
                 st.markdown("#### ⚠️ Danger Signs Education")
@@ -3373,7 +4063,7 @@ elif st.session_state.page == 'Low Risk':
                     "Timing": ["At birth", "At birth", "6 weeks", "10 weeks", "14 weeks", "6 weeks", "10 weeks", "14 weeks", "6 weeks", "10 weeks", "14 weeks", "6 weeks", "10 weeks"],
                     "Purpose": ["Tuberculosis", "Polio", "Polio", "Polio", "Polio", "Diphtheria, Pertussis, Tetanus, Hep B, Hib", "Diphtheria, Pertussis, Tetanus, Hep B, Hib", "Diphtheria, Pertussis, Tetanus, Hep B, Hib", "Pneumococcal", "Pneumococcal", "Pneumococcal", "Rotavirus", "Rotavirus"]
                 }
-                st.dataframe(pd.DataFrame(immunization_data), use_container_width=True, hide_index=True)
+                st.dataframe(pd.DataFrame(immunization_data), width='stretch', hide_index=True)
             
             st.markdown("---")
             st.info("💡 **Professional Note:** This care plan follows WHO guidelines for low-risk pregnancies. Always consult with your healthcare provider for personalized medical advice tailored to your specific situation.")
@@ -3383,11 +4073,117 @@ elif st.session_state.page == 'Low Risk':
         st.warning("No data loaded. Please upload a dataset or use sample data.")
 
 elif st.session_state.page == 'HIV Seroconversion':
-    st.subheader("HIV Status Analysis")
-    st.write("HIV status distribution from your data.")
+    st.header("🧬 HIV Seroconversion & PMTCT Analysis")
+    st.info("Track HIV incidence, seroconversion cases, and PMTCT success rates")
 
     df = st.session_state.current_df
     if df is not None and not df.empty:
+        # HIV Status Distribution
+        st.subheader("HIV Status Distribution")
+        hiv_col = None
+        for col in ['HIV Status (P/N/KP/U)', 'HIV Status', 'HIV']:
+            if col in df.columns:
+                hiv_col = col
+                break
+        
+        if hiv_col:
+            hiv_counts = df[hiv_col].fillna('U').value_counts().reset_index()
+            hiv_counts.columns = ['Status', 'Records']
+            total_records = hiv_counts['Records'].sum()
+            hiv_counts['Percentage'] = (hiv_counts['Records'] / total_records * 100).round(2)
+            
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Total Records", f"{total_records:,}")
+            col2.metric("HIV Positive", f"{hiv_counts[hiv_counts['Status']=='P']['Records'].values[0] if len(hiv_counts[hiv_counts['Status']=='P'])>0 else 0:,}")
+            col3.metric("HIV Negative", f"{hiv_counts[hiv_counts['Status']=='N']['Records'].values[0] if len(hiv_counts[hiv_counts['Status']=='N'])>0 else 0:,}")
+            
+            if MATPLOTLIB_AVAILABLE:
+                fig, ax = plt.subplots(figsize=(10, 6))
+                hiv_counts.set_index('Status')['Records'].plot(kind='bar', ax=ax, color=['green', 'red', 'orange', 'gray'])
+                ax.set_title('HIV Status Distribution')
+                ax.set_xlabel('Status (P=Positive, N=Negative, KP=KP, U=Unknown)')
+                ax.set_ylabel('Count')
+                ax.tick_params(axis='x', rotation=0)
+                ax.grid(True, alpha=0.3)
+                plt.tight_layout()
+                st.pyplot(fig)
+                plt.close()
+        
+        # HIV Seroconversion Cases (HIV- at ANC onset, HIV+ later)
+        st.markdown("---")
+        st.subheader("🔬 HIV Seroconversion Cases")
+        st.info("Mothers who were HIV-negative at ANC onset but later became HIV-positive")
+        
+        # Check for columns that might indicate initial vs final HIV status
+        initial_hiv_cols = [col for col in df.columns if 'initial' in col.lower() and 'hiv' in col.lower()]
+        final_hiv_cols = [col for col in df.columns if 'final' in col.lower() and 'hiv' in col.lower()]
+        
+        if initial_hiv_cols and final_hiv_cols:
+            st.success(f"Found HIV status tracking columns: {initial_hiv_cols[0]} and {final_hiv_cols[0]}")
+            
+            # Identify seroconversion cases
+            seroconversion = df[(df[initial_hiv_cols[0]] == 'N') & (df[final_hiv_cols[0]] == 'P')]
+            st.metric("Seroconversion Cases", f"{len(seroconversion):,}")
+            
+            if len(seroconversion) > 0:
+                st.warning(f"⚠️ {len(seroconversion)} mothers seroconverted from HIV- to HIV+")
+                st.dataframe(seroconversion.head(20), width='stretch')
+        else:
+            st.warning("⚠️ No initial/final HIV status columns found. Seroconversion tracking requires columns like 'Initial_HIV_Status' and 'Final_HIV_Status'")
+        
+        # PMTCT Success Metrics
+        st.markdown("---")
+        st.subheader("👶 PMTCT Success Analysis")
+        st.info("HIV+ mothers who gave birth to HIV- children surviving 5 years")
+        
+        pmtct_cols = {
+            'mother_hiv': [col for col in df.columns if 'mother' in col.lower() and 'hiv' in col.lower()],
+            'baby_hiv': [col for col in df.columns if 'baby' in col.lower() and 'hiv' in col.lower()],
+            'child_survival': [col for col in df.columns if 'survival' in col.lower() or 'survive' in col.lower()],
+            'infant_status': [col for col in df.columns if 'infant' in col.lower() and 'status' in col.lower()]
+        }
+        
+        mother_hiv_col = pmtct_cols['mother_hiv'][0] if pmtct_cols['mother_hiv'] else hiv_col
+        baby_hiv_col = pmtct_cols['baby_hiv'][0] if pmtct_cols['baby_hiv'] else None
+        
+        if mother_hiv_col and baby_hiv_col:
+            hiv_mothers = df[df[mother_hiv_col] == 'P']
+            pmtct_success = hiv_mothers[hiv_mothers[baby_hiv_col] == 'N']
+            
+            col1, col2, col3 = st.columns(3)
+            col1.metric("HIV+ Mothers", f"{len(hiv_mothers):,}")
+            col2.metric("HIV- Babies", f"{len(pmtct_success):,}")
+            col3.metric("PMTCT Success Rate", f"{(len(pmtct_success)/len(hiv_mothers)*100):.1f}%" if len(hiv_mothers) > 0 else "N/A")
+            
+            if MATPLOTLIB_AVAILABLE:
+                fig, ax = plt.subplots(figsize=(8, 6))
+                labels = ['HIV- Babies (Success)', 'HIV+ Babies (Failure)']
+                sizes = [len(pmtct_success), len(hiv_mothers) - len(pmtct_success)]
+                colors = ['green', 'red']
+                ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90)
+                ax.set_title('PMTCT Success Rate')
+                plt.tight_layout()
+                st.pyplot(fig)
+                plt.close()
+        else:
+            st.warning("⚠️ No baby HIV status column found. PMTCT tracking requires column like 'Baby_HIV_Status'")
+        
+        # ARV Adherence
+        st.markdown("---")
+        st.subheader("💊 ARV Adherence Analysis")
+        st.info("HIV+ mothers who fail to take ARVs")
+        
+        arv_cols = [col for col in df.columns if 'arv' in col.lower() or 'regimen' in col.lower()]
+        
+        if arv_cols:
+            st.success(f"Found ARV-related columns: {', '.join(arv_cols[:3])}")
+            
+            for arv_col in arv_cols[:2]:
+                arv_counts = df[arv_col].fillna('Missing').value_counts()
+                st.write(f"**{arv_col}**")
+                st.bar_chart(arv_counts)
+        else:
+            st.warning("⚠️ No ARV adherence columns found")
         hiv_column = 'HIV Status (P/N/KP/U)'
         if hiv_column not in df.columns:
             st.error(f"Column '{hiv_column}' was not found in the data.")
