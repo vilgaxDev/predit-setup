@@ -538,31 +538,35 @@ try:
             "maternity": ("Maternity Register", MATERNITY_FILE),
             "anc1": ("ANC Register 1", ANC_FILE_1),
             "anc2": ("ANC Register 2", ANC_FILE_2),
+            "pnc": ("PNC Register", PNC_FILE),
             "under5": ("Under-5 Register", UNDER5_FILE)
         }
 
-        # Load ALL available files with ALL sheets
+        # Load ONLY first sheet from each file for faster startup
         total_loaded = 0
         for key, (name, filepath) in data_files.items():
             st.sidebar.write(f"Checking {name}...")
             if filepath.exists():
                 try:
-                    # Load all sheets from the Excel file
+                    # Load only first sheet for faster startup
                     all_sheets = load_excel_all_sheets(filepath)
 
                     if all_sheets:
-                        # Store each sheet as a separate data source
-                        for sheet_name, df_sheet in all_sheets.items():
-                            sheet_key = f"{key}_{sheet_name}"
-                            st.session_state.all_data_sources[sheet_key] = {
-                                'name': f"{name} - {sheet_name}",
-                                'data': df_sheet,
-                                'records': len(df_sheet),
-                                'sheet_name': sheet_name,
-                                'file_key': key
-                            }
-                            st.sidebar.success(f"✅ Loaded {len(df_sheet):,} records from {name} - {sheet_name}")
-                            total_loaded += 1
+                        # Load only the first sheet
+                        first_sheet_name = list(all_sheets.keys())[0]
+                        df_sheet = all_sheets[first_sheet_name]
+                        sheet_key = f"{key}_{first_sheet_name}"
+                        st.session_state.all_data_sources[sheet_key] = {
+                            'name': f"{name} - {first_sheet_name}",
+                            'data': df_sheet,
+                            'records': len(df_sheet),
+                            'sheet_name': first_sheet_name,
+                            'file_key': key,
+                            'all_sheets': all_sheets  # Store all sheets for later loading
+                        }
+                        st.sidebar.success(f"✅ Loaded {len(df_sheet):,} records from {name} - {first_sheet_name}")
+                        st.sidebar.info(f"ℹ️ {len(all_sheets)-1} more sheets available - select to load")
+                        total_loaded += 1
                     else:
                         st.sidebar.warning(f"⚠️ No sheets found in {name}")
                 except Exception as e:
@@ -801,6 +805,7 @@ except Exception as e:
         "Maternity Register": MATERNITY_FILE,
         "ANC Register 1": ANC_FILE_1,
         "ANC Register 2": ANC_FILE_2,
+        "PNC Register": PNC_FILE,
         "Under-5 Register": UNDER5_FILE
     }
 
@@ -1173,6 +1178,8 @@ try:
                                              labels={birth_weight_col: 'Birth Weight (grams)'},
                                              color_discrete_sequence=['#10B981'])
                             fig.update_layout(bargap=0.2)
+                            fig.update_xaxes(title_text="Birth Weight (grams)")
+                            fig.update_yaxes(title_text="Count")
                             fig.add_vline(x=2500, line_dash="dash", line_color="red", 
                                          annotation_text="Low Birth Weight Threshold")
                             st.plotly_chart(fig, width=True)
@@ -1616,83 +1623,88 @@ if st.session_state.page == 'Trend Analysis':
                 # Display the actual years
                 st.info(f"Showing data for years: {', '.join(map(str, years))}")
                 
-                # Yearly pregnancy rate (5 years)
-                st.markdown("#### Yearly Pregnancy Rate")
-                yearly_counts = df_dates_5y.groupby('year').size().reset_index(name='count')
+                # HIV vs Years
+                st.markdown("#### HIV Status by Year")
+                hiv_col = None
+                for col in ['HIV Status (P/N/KP/U)', 'HIV Status', 'HIV']:
+                    if col in df_dates_5y.columns:
+                        hiv_col = col
+                        break
                 
-                if MATPLOTLIB_AVAILABLE:
-                    fig, ax = plt.subplots(figsize=(12, 6))
-                    ax.plot(yearly_counts['year'], yearly_counts['count'], marker='o', color='red', linewidth=2, markersize=8)
-                    ax.set_title('Yearly Pregnancy Rate Trend')
-                    ax.set_xlabel('Year')
-                    ax.set_ylabel('Number of Pregnancies')
-                    ax.set_xticks(yearly_counts['year'])
-                    ax.grid(True, alpha=0.3)
-                    plt.tight_layout()
-                    st.pyplot(fig)
-                    plt.close()
-                
-                # Yearly breakdown with metrics (5 years)
-                st.markdown("#### Yearly Breakdown")
-                yearly_metrics = df_dates_5y.groupby('year').agg({
-                    'Age': ['mean', 'min', 'max'],
-                    'Birth Weight (in grams)': 'mean',
-                    'APGAR Score': 'mean'
-                }).round(2)
-                yearly_metrics.columns = ['Avg Age', 'Min Age', 'Max Age', 'Avg Birth Weight', 'Avg APGAR']
-                st.dataframe(yearly_metrics, width='stretch')
-                
-                # Yearly risk distribution (5 years)
-                if 'risk_score' in df_dates_5y.columns:
-                    st.markdown("#### Yearly Risk Distribution")
-                    yearly_risk = df_dates_5y.groupby('year')['risk_score'].mean().reset_index()
+                if hiv_col:
+                    yearly_hiv = df_dates_5y.groupby(['year', hiv_col]).size().unstack(fill_value=0)
+                    
+                    st.write("HIV Status by Year Data:")
+                    st.dataframe(yearly_hiv)
                     
                     if MATPLOTLIB_AVAILABLE:
                         fig, ax = plt.subplots(figsize=(12, 6))
-                        yearly_risk.plot(kind='bar', x='year', y='risk_score', ax=ax, color='orange')
-                        ax.set_title('Average Risk Score by Year')
+                        yearly_hiv.plot(kind='bar', ax=ax, stacked=True)
+                        ax.set_title('HIV Status Distribution by Year')
                         ax.set_xlabel('Year')
-                        ax.set_ylabel('Average Risk Score')
-                        ax.grid(True, alpha=0.3)
+                        ax.set_ylabel('Count')
+                        ax.legend(title='HIV Status')
+                        ax.grid(True, alpha=0.3, axis='y')
                         plt.tight_layout()
                         st.pyplot(fig)
                         plt.close()
+                else:
+                    st.warning("No HIV status column found in data")
                 
-                # Yearly comparison table
-                st.markdown("#### Yearly Comparison Summary")
-                col1, col2, col3, col4 = st.columns(4)
-                for idx, row in yearly_counts.iterrows():
-                    year = int(row['year'])
-                    count = row['count']
-                    if idx == 0:
-                        col1.metric(f"{year}", f"{count:,}", "Baseline")
-                    elif idx > 0:
-                        prev_count = yearly_counts.iloc[idx-1]['count']
-                        delta = count - prev_count
-                        delta_pct = (delta / prev_count * 100) if prev_count > 0 else 0
-                        if idx == 1:
-                            col2.metric(f"{year}", f"{count:,}", f"{delta:+,} ({delta_pct:+.1f}%)")
-                        elif idx == 2:
-                            col3.metric(f"{year}", f"{count:,}", f"{delta:+,} ({delta_pct:+.1f}%)")
-                        elif idx == 3:
-                            col4.metric(f"{year}", f"{count:,}", f"{delta:+,} ({delta_pct:+.1f}%)")
+                # High Risk vs Years
+                st.markdown("#### High-Risk Pregnancies by Year")
+                # Calculate risk score if not exists
+                if 'risk_score' not in df_dates_5y.columns:
+                    df_dates_5y['risk_score'] = 0
+                    if 'Age' in df_dates_5y.columns:
+                        df_dates_5y.loc[df_dates_5y['Age'] < 18, 'risk_score'] += 1
+                        df_dates_5y.loc[df_dates_5y['Age'] > 35, 'risk_score'] += 1
+                    if 'HIV Status (P/N/KP/U)' in df_dates_5y.columns:
+                        df_dates_5y.loc[df_dates_5y['HIV Status (P/N/KP/U)'] == 'P', 'risk_score'] += 1
                 
-                # Cumulative pregnancy rate (5 years)
-                st.markdown("#### Cumulative Pregnancy Rate")
-                yearly_counts = df_dates_5y.groupby('year').size().reset_index(name='count')
-                yearly_counts['cumulative'] = yearly_counts['count'].cumsum()
-
+                df_dates_5y['is_high_risk'] = df_dates_5y['risk_score'] >= 2
+                yearly_high_risk = df_dates_5y.groupby('year')['is_high_risk'].sum().reset_index(name='count')
+                
+                st.info(f"High-risk pregnancies found: {yearly_high_risk['count'].sum():,}")
+                
                 if MATPLOTLIB_AVAILABLE:
                     fig, ax = plt.subplots(figsize=(12, 6))
-                    ax.plot(yearly_counts['year'].astype(str), yearly_counts['cumulative'], 
-                           marker='o', color='purple', linewidth=2)
-                    ax.set_title('Cumulative Pregnancy Rate Over Time')
+                    ax.bar(yearly_high_risk['year'], yearly_high_risk['count'], color='red')
+                    ax.set_title('High-Risk Pregnancies by Year')
                     ax.set_xlabel('Year')
-                    ax.set_ylabel('Cumulative Count')
-                    ax.grid(True, alpha=0.3)
+                    ax.set_ylabel('Count')
+                    ax.set_xticks(yearly_high_risk['year'])
+                    ax.set_xticklabels(yearly_high_risk['year'], rotation=0)
+                    ax.grid(True, alpha=0.3, axis='y')
                     plt.tight_layout()
                     st.pyplot(fig)
                     plt.close()
+                else:
+                    st.bar_chart(yearly_high_risk.set_index('year')['count'])
+                
+                st.markdown("---")
+                
+                # Low Risk vs Years
+                st.markdown("#### Low-Risk Pregnancies by Year")
+                df_dates_5y['is_low_risk'] = df_dates_5y['risk_score'] == 0
+                yearly_low_risk = df_dates_5y.groupby('year')['is_low_risk'].sum().reset_index(name='count')
+                
+                st.info(f"Low-risk pregnancies found: {yearly_low_risk['count'].sum():,}")
+                
+                if MATPLOTLIB_AVAILABLE:
+                    fig, ax = plt.subplots(figsize=(12, 6))
+                    ax.bar(yearly_low_risk['year'], yearly_low_risk['count'], color='green')
+                    ax.set_title('Low-Risk Pregnancies by Year')
+                    ax.set_xlabel('Year')
+                    ax.set_ylabel('Count')
+                    ax.set_xticks(yearly_low_risk['year'])
+                    ax.set_xticklabels(yearly_low_risk['year'], rotation=0)
+                    ax.grid(True, alpha=0.3, axis='y')
+                    plt.tight_layout()
+                    st.pyplot(fig)
+                    plt.close()
+                else:
+                    st.bar_chart(yearly_low_risk.set_index('year')['count'])
         else:
             st.warning("No admission date column found for time series analysis")
         
@@ -2401,7 +2413,7 @@ elif st.session_state.page == 'Multi-Dataset Evaluation':
         
         ANC_FILE_1 = find_data_file("MOH_405_ANC final JAN 2026.xlsx")
         UNDER5_FILE = find_data_file("MOH_204A_UNDER5 revised version on jan 2026.xlsx")
-        PNC_FILE = find_data_file("MOH_406_PNC.xlsx")
+        PNC_FILE = find_data_file("MOH_406_PNC_20 Sheets 2 version 2.xlsx")
         
         datasets = {}
         
